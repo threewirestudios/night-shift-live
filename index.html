@@ -429,7 +429,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-bg"></div><div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.55</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.56</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -1064,7 +1064,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 <div class="modal-overlay" id="hq-evac-modal" style="background:rgba(3,5,10,.97);align-items:center;justify-content:center;">
   <div class="hq-evac-panel">
     <div class="hq-evac-img-wrap">
-      <img src="Cutscene Graphics/Civic Core Collapse.png" style="width:100%;height:auto;display:block;">
+      <img src="../Cutscene Graphics/Civic Core Collapse.png" style="width:100%;height:auto;display:block;">
     </div>
     <div class="hq-evac-body">
       <div class="hq-evac-text" id="hq-evac-text"></div>
@@ -1093,6 +1093,16 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
       <button class="btn-tskip" onclick="skipTut()">Skip</button>
       <button class="btn-tnext" onclick="nextTut()">Got it →</button>
     </div>
+  </div>
+</div>
+
+<!-- COMING SOON SCREEN -->
+<div id="coming-soon-screen" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;text-align:center;padding:40px;">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:5px;color:var(--amber);opacity:.85;margin-bottom:20px;border:1px solid rgba(224,152,24,.35);border-left:3px solid var(--amber);padding:5px 14px;display:inline-block;background:rgba(224,152,24,.05);">NIGHT SHIFT: CONTAINMENT</div>
+    <div style="font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;margin-bottom:12px;">To Be<br>Continued</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);max-width:420px;line-height:1.9;margin-bottom:36px;">Crown Harbor's story isn't over.<br>The next chapter is in development.</div>
+    <button class="btn-start" onclick="restartGame()">PLAY AGAIN</button>
   </div>
 </div>
 
@@ -5308,7 +5318,7 @@ function showFired() {
   // Night 3+: use the zombie breach image instead of the early-game fired screen
   if(G.night >= 3) {
     const firedImg = document.getElementById("fired-img");
-    if(firedImg) firedImg.src = "Cutscene Graphics/Fail Night 3+.png";
+    if(firedImg) firedImg.src = "../Cutscene Graphics/Fail Night 3+.png";
   }
   document.getElementById("fired-screen").classList.add("active");
 }
@@ -5328,7 +5338,7 @@ function triggerN6GameOver(reason) {
         : "Night 6 ended with no cleanse completed. The plan dies here. Crown Harbor falls.";
       document.getElementById("fired-sub").textContent = sub;
       const firedImg = document.getElementById("fired-img");
-      if(firedImg) firedImg.src = "Cutscene Graphics/Fail Night 3+.png";
+      if(firedImg) firedImg.src = "../Cutscene Graphics/Fail Night 3+.png";
       document.getElementById("game-screen").classList.remove("active");
       document.getElementById("debrief-modal").classList.remove("open");
       document.getElementById("fired-screen").classList.add("active");
@@ -7098,28 +7108,28 @@ const CUTSCENE_DATA = {
   },
   // Night 4 \u2192 5: City unravels \u2014 burning docks, isolation, political vacuum
   4: {
-    img: "Cutscene Graphics/Cutscene Night 4-5.png",
+    img: "../Cutscene Graphics/Cutscene Night 4-5.png",
     tag: "CROWN HARBOR \u2014 EMERGENCY BROADCAST \u2014 DAY 5 \u2014 06:22",
     headline: "The City Is On Its Own Now",
     body: "Last night Crown Harbor unraveled, district by district, and the only thing keeping what\u2019s left of it standing is the people who didn\u2019t run.\n\nWhatever is moving through the streets \u2014 and no one\u2019s ready to say the \u201cZ\u201d word yet \u2014 it\u2019s contained to Crown Harbor. Small mercy. Unfortunately for us, the Governor wants to keep it that way and ordered all routes in and out restricted. The docks, the airport, the ring roads \u2014 sealed or lost. We\u2019re on our own.\n\nThe Mayor and most of the city\u2019s elected leadership were at Crown Harbor General visiting the previous night\u2019s victims when Med Row fell. The city is now being run by what\u2019s left of the Police and other essential services, including emergency management. Looks like you just got a promotion.\n\nThat also means there is still a city to be run and that is something. That is hope. Get some food, get some sleep and get ready to go again \u2014 this is far from over."
   },
   // Night 5 \u2192 6: HQ relocated, airdrop, outline of a plan
   5: {
-    img: "Cutscene Graphics/Cutscene Night 5-6.png",
+    img: "../Cutscene Graphics/Cutscene Night 5-6.png",
     tag: "CROWN HARBOR \u2014 SHORTWAVE \u2014 DAY 6 \u2014 05:51",
     headline: "What\u2019s Left",
     body: "Crown Harbor is smaller this morning. Not just in size \u2014 but in what\u2019s possible. Civic Core is gone. The main comms relay is silent \u2014 which means you\u2019re working half blind, and that\u2019s not changing anytime soon. By dawn, every unit had pulled back. There was no way to hold anything else, the tide was too strong. The rest of the city fell overnight, all of it\u2026except one district.\n\nBut there was a silver lining to last night. The new location we evac\u2019d to isn\u2019t as built up as Civic Core \u2014 which allowed for an airdrop at first light. Turns out the Governor has a heart after all. Food, ammo, medical supplies and buried in another container \u2014 the outline of a plan to save the city. It\u2019s bold. It\u2019s probably suicidal. But it\u2019s something. We need to either retake the airport to allow the flow of samples out and hopefully serums back, or we retake Med Row and its labs. Oh \u2014 and either way, we need the comms hub back. Would\u2019ve been nice to know that last night. Also\u2026how do we retake districts? Oh wait\u2026is that another parachute coming down?"
   },
   // Night 6 \u2192 7: units get better equipment, more drops inbound
   6: {
-    img: "Cutscene Graphics/Cutscene Night 6-7.png",
+    img: "../Cutscene Graphics/Cutscene Night 6-7.png",
     tag: "CROWN HARBOR \u2014 SHORTWAVE \u2014 DAY 7 \u2014 06:14",
     headline: "Better Armed. Not Safe.",
     body: "Last night was hairy, but it\u2019s the first time it has felt like we won. The Governor\u2019s plan might have a shot after all.\n\nThe Suppressor was like out of legend, not just his enhanced gear, but his knowledge and nerve...I don\u2019t even want to ask where or how this guy earned his stripes. That said, our teams are learning from him quickly. Even more importantly, at dawn another air drop brought in more advanced gear. While, unfortunately, we didn\u2019t get another one man army, a couple instructors and techs parachuted in to help our teams make the best use of the new gear. Some of our cops knew one of the instructors and have taken an early shine to the new kit. That\u2019s a good sign and melted any hesitation our other teams had of taking a look.\n\nYou don\u2019t know if the city can be saved. But you do know it is now officially twice as big as it was yesterday. Wait...did I just hear someone quote RoboCop? What exactly was in those crates...they can be such children som..."
   },
   // Night 7 \u2192 8: research teams operational, specimen phase begins
   7: {
-    img: "Cutscene Graphics/Cutscene Night 7-8.png",
+    img: "../Cutscene Graphics/Cutscene Night 7-8.png",
     tag: "CROWN HARBOR \u2014 SHORTWAVE \u2014 DAY 8 \u2014 06:31",
     headline: "Momentum",
     body: "Two districts reclaimed in two nights and stage one of the plan complete. There is now real hope starting to grow of saving the city.\n\nThe research teams are up and running. They moved fast \u2014 assessed the situation, got organized, and had questions by 0530. Good questions....almost too good. They were the kind of questions that suggest they\u2019ve been thinking about this longer than we have. What they need now are specimens. Live if possible. Dead if not. Somewhere in between if that\u2019s what\u2019s available \u2014 and they were ominously specific about that last part. Best not to think about it.\n\nBack on the headset at 22:00."
@@ -7145,7 +7155,7 @@ function showSleepScreen(){
   if(CUTSCENE_DATA[night]) {
     document.getElementById("game-screen").classList.remove("active");
     document.getElementById("debrief-modal").classList.remove("open");
-    showCutscene(night, ()=> night+1 >= 7 ? showOpBriefing(night+1) : showTeaser());
+    showCutscene(night, ()=> night+1 > 7 ? showComingSoon() : night+1 >= 7 ? showOpBriefing(night+1) : showTeaser());
     return;
   }
 
@@ -7213,6 +7223,11 @@ function endCutscene(){
     window._cutsceneCallback = null;
     cb();
   }
+}
+
+function showComingSoon(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById("coming-soon-screen").classList.add("active");
 }
 
 function showTeaser(){
@@ -7409,7 +7424,7 @@ function showOpBriefing(nextNight) {
   document.getElementById("opbrief-evo-chart").innerHTML = `<div style="position:relative;">
     <div style="display:flex;">
       <div style="width:46px;flex-shrink:0;"></div>
-      <img src="Cutscene Graphics/Class Evolutions.png" style="flex:1;min-width:0;display:block;width:100%;border:1px solid var(--border2);">
+      <img src="../Cutscene Graphics/Class Evolutions.png" style="flex:1;min-width:0;display:block;width:100%;border:1px solid var(--border2);">
       <div style="width:218px;flex-shrink:0;"></div>
     </div>
     <div style="position:absolute;top:0;left:0;right:0;bottom:0;transform:translateY(${overlayShift}px);pointer-events:none;">
@@ -8996,13 +9011,13 @@ const CTX_TUTS = {
     title:"Interchange — Airport Secured",
     body:"Last infected went quiet twenty minutes ago. The Suppressors worked the final blocks as other units pushed through to the terminal. Someone hoisted a flag over the control tower — the district is clear.\n\nInterchange and, more importantly, the airport are now ours. That was step one. We now have a link to the outside — research teams to figure out what's actually going on will be inbound shortly, along with a steady stream of advanced gear. This will mean new capabilities for the team, faster than training and airdrops alone.\n\n<b>This is the first good news Crown Harbor has had since this began. Now — step two.</b>",
     target:"map-panel", place:"right",
-    img:"Cutscene Graphics/Interchange Liberation 2.png"
+    img:"../Cutscene Graphics/Interchange Liberation 2.png"
   },
   medrow_cleansed: {
     title:"Med Row — Reclaimed",
     body:"The room-by-room fighting was brutal, but the hospital is back in our hands. The labs too — the ones that are left, anyway.\n\nDespite the widespread damage, the lab complexes listed as critical are intact — all of them. And as if that wasn't enough — mop-up teams clearing these facilities found most of the research staff had survived by shutting themselves in storage vaults, hermetic chambers, and even a broom closet.\n\nWe don't know what caused this yet — but with what we secured today, the path to saving this city just got a lot shorter.\n\n<b>This was a good day...ok, celebration over. Now, step two.</b>",
     target:"map-panel", place:"right",
-    img:"Cutscene Graphics/MedRow Liberation 2.png"
+    img:"../Cutscene Graphics/MedRow Liberation 2.png"
   },
 };
 
