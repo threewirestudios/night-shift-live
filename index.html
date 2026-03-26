@@ -69,9 +69,19 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .district-lost-hatch{pointer-events:none;}
 .district-shape:hover{cursor:pointer;}
 .district-label{font-family:'Oswald',sans-serif;font-size:10px;fill:rgba(192,204,218,.48);pointer-events:none;text-transform:uppercase;letter-spacing:1px;}
-.incident-pin{cursor:pointer;}
+.incident-pin{cursor:pointer;pointer-events:bounding-box;}
 .pin-ring{animation:ping 2.2s cubic-bezier(0,0,.2,1) infinite;}
 @keyframes ping{0%{r:9;opacity:.8}70%{r:18;opacity:0}100%{r:18;opacity:0}}
+.incident-pin.responded .pin-ring{animation:none;opacity:.25;}
+.incident-pin.responded{pointer-events:bounding-box;}
+#pin-tooltip{position:fixed;pointer-events:none;background:rgba(4,10,20,.94);border:1px solid var(--border2);padding:5px 10px;font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text);line-height:1.65;z-index:200;display:none;white-space:nowrap;}
+#pin-tooltip .pt-sev{font-weight:700;letter-spacing:1px;}
+#pin-tooltip .pt-sev.s1{color:var(--cyan);}#pin-tooltip .pt-sev.s2{color:var(--amber);}#pin-tooltip .pt-sev.s3{color:var(--red);}
+.critical-ticker{position:absolute;z-index:20;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
+.ticker-msg{padding:5px 16px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.6px;white-space:nowrap;opacity:0;animation:tickFade 5s ease-out forwards;}
+.ticker-msg.alert{background:rgba(3,8,18,.88);border:1px solid rgba(200,56,56,.6);color:#f07070;}
+.ticker-msg.narrative{background:rgba(3,8,18,.88);border:1px solid rgba(200,140,20,.5);color:#e8c87a;font-style:italic;}
+@keyframes tickFade{0%{opacity:0;transform:translateY(-6px)}8%{opacity:1;transform:translateY(0)}75%{opacity:1}100%{opacity:0;transform:translateY(0)}}
 .right-panels{width:260px;display:flex;flex-direction:column;border-left:2px solid var(--border2);overflow:hidden;flex-shrink:0;}
 .panel-header{height:30px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 10px;gap:7px;flex-shrink:0;}
 .panel-title{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
@@ -95,8 +105,8 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .comm-line.limbo{color:#c090ff;border-left-color:var(--limbo);border-left-width:3px;background:rgba(128,48,192,.11);font-size:11px;padding:5px 8px;}
 .comm-line.narrative{color:#e8c87a;border-left-color:var(--amber);border-left-width:3px;background:rgba(200,140,20,.06);font-size:11px;font-style:italic;padding:5px 8px;letter-spacing:.2px;}
 .comm-time{color:var(--text3);margin-right:5px;font-size:9.5px;}
-.queue-strip{height:115px;border-top:2px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0;background:var(--bg2);position:relative;}
-.comm-sign{position:absolute;bottom:100%;left:4px;margin-bottom:4px;background:var(--panel);border:1px solid var(--border2);padding:6px 12px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.queue-strip{height:115px;border-top:2px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0;background:var(--bg2);}
+.comm-sign{position:absolute;z-index:18;background:var(--panel);border:1px solid var(--border2);padding:6px 12px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;}
 .comm-sign-label{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:2px;color:var(--text2);font-weight:700;text-transform:uppercase;text-align:center;white-space:nowrap;}
 .comm-sign-count{font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:700;line-height:1;letter-spacing:3px;transition:color .2s;white-space:nowrap;}
 .queue-list{flex:1;overflow-x:auto;overflow-y:hidden;padding:5px 6px;display:flex;flex-direction:row;gap:6px;align-items:stretch;}
@@ -425,6 +435,36 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   font-family:'IBM Plex Mono',monospace;font-size:10px;padding:6px 12px;cursor:pointer;transition:all .15s;
 }
 .btn-tskip:hover{color:var(--text2);border-color:var(--text2);}
+
+/* SETTINGS MODAL */
+#settings-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(4,5,10,.95);align-items:center;justify-content:center;}
+#settings-modal.open{display:flex;}
+.settings-panel{background:var(--panel);border:2px solid var(--border2);width:480px;max-width:94vw;max-height:86vh;overflow-y:auto;box-shadow:0 0 60px rgba(0,0,0,.9);}
+.settings-panel::-webkit-scrollbar{width:4px;}
+.settings-panel::-webkit-scrollbar-thumb{background:var(--border2);}
+.settings-hdr{padding:12px 16px 10px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;}
+.settings-hdr-title{font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--text);}
+.settings-close{background:transparent;border:1px solid var(--border);color:var(--text3);font-size:13px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.settings-close:hover{border-color:var(--red);color:var(--red);}
+.settings-body{padding:18px 16px;}
+.settings-section{margin-bottom:24px;}
+.settings-section:last-child{margin-bottom:0;}
+.settings-section-title{font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:4px;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;}
+.settings-row-lbl{font-size:10.5px;color:var(--text2);line-height:1.4;}
+.settings-row-sub{font-size:9px;color:var(--text3);margin-top:1px;}
+.settings-toggle{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:5px 16px;cursor:pointer;transition:all .15s;min-width:50px;text-align:center;}
+.settings-toggle.on{border-color:var(--amber);color:var(--amber);}
+/* POSITION PICKER */
+.pos-picker-wrap{margin-top:10px;display:flex;align-items:center;gap:18px;}
+.pos-screen{position:relative;width:126px;height:80px;border:1.5px solid var(--border2);background:var(--bg2);flex-shrink:0;}
+.pos-btn{position:absolute;width:28px;height:18px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:all .12s;}
+.pos-btn:hover{border-color:var(--text2);background:var(--panel2);}
+.pos-btn.active{background:rgba(224,152,24,.18);border-color:var(--amber);}
+.pos-btn.pos-tl{top:6px;left:6px;}.pos-btn.pos-tc{top:6px;left:50%;transform:translateX(-50%);}
+.pos-btn.pos-tr{top:6px;right:6px;}.pos-btn.pos-bl{bottom:6px;left:6px;}
+.pos-btn.pos-bc{bottom:6px;left:50%;transform:translateX(-50%);}.pos-btn.pos-br{bottom:6px;right:6px;}
+.pos-hint{font-size:9px;color:var(--text3);line-height:1.65;}
 </style>
 </head>
 <body>
@@ -436,7 +476,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.73</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.79</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -446,6 +486,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
     <div id="title-btns" style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:4px;">
       <button id="btn-continue" class="btn-start" style="display:none;" onclick="continueGame()">CONTINUE — NIGHT <span id="btn-continue-night"></span></button>
       <button id="btn-newgame" class="btn-start blink" onclick="newGame()">START NEW SHIFT</button>
+      <button onclick="openSettings()" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.3);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2.5px;padding:5px 18px;cursor:pointer;transition:all .15s;margin-top:4px;" onmouseover="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='rgba(255,255,255,.5)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.color='rgba(255,255,255,.3)'">⚙ SETTINGS</button>
     </div>
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:16px auto 0;"></div>
     <div id="dev-hint" style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.15);letter-spacing:1px;cursor:pointer;" onclick="toggleDevPanel()">⚙ DEV</div>
@@ -675,6 +716,11 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
     <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:3px;text-transform:uppercase;" id="staged-banner-text">⬡ UNIT STAGED — AWAITING YOUR ORDER</span>
     <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(200,140,20,.65);">· Click the incident card to give an order ·</span>
   </div>
+  <div class="critical-ticker" id="critical-ticker"></div>
+  <div class="comm-sign" id="tba-comms-anchor">
+    <span class="comm-sign-label">Comm Channels</span>
+    <span id="tb-comms-display" class="comm-sign-count" style="color:var(--cyan)">0 / 4</span>
+  </div>
       <svg id="city-map" viewBox="0 60 760 370" preserveAspectRatio="xMidYMid meet">
         <defs>
           <pattern id="lostHatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
@@ -692,7 +738,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
         <!-- Civic Core -->
         <g class="district-shape" id="dg-CivicCore" onclick="clickDistrict('Civic Core')">
           <path class="district-fill" d="M280,80 L420,80 L420,200 L280,200 Z" fill="#1a2840" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="350" y="146" text-anchor="middle">Civic Core</text>
+          <text class="district-label" x="350" y="190" text-anchor="middle">Civic Core</text>
         </g>
         <!-- Oldstone -->
         <g class="district-shape" id="dg-Oldstone" onclick="clickDistrict('Oldstone')">
@@ -731,13 +777,13 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
         </g>
         <!-- Med Row -->
         <g class="district-shape" id="dg-MedRow" onclick="clickDistrict('Med Row')">
-          <path class="district-fill" d="M560,200 L700,200 L700,310 L560,310 Z" fill="#182040" fill-opacity=".3" stroke="#253058" stroke-width="1" stroke-dasharray="5,3"/>
-          <text class="district-label" x="630" y="258" text-anchor="middle" opacity=".55">Med Row</text>
+          <path class="district-fill" d="M560,200 L700,200 L700,310 L560,310 Z" fill="#182040" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="630" y="268" text-anchor="middle">Med Row</text>
         </g>
         <!-- Interchange -->
         <g class="district-shape" id="dg-Interchange" onclick="clickDistrict('Interchange')">
-          <path class="district-fill" d="M20,80 L110,80 L110,210 L20,210 Z" fill="#182030" fill-opacity=".3" stroke="#253058" stroke-width="1" stroke-dasharray="5,3"/>
-          <text class="district-label" x="65" y="147" text-anchor="middle" opacity=".55">Interchange</text>
+          <path class="district-fill" d="M20,80 L110,80 L110,210 L20,210 Z" fill="#182030" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="65" y="147" text-anchor="middle">Interchange</text>
         </g>
         <!-- Roads -->
         <line x1="0" y1="200" x2="760" y2="200" stroke="#1e2c3e" stroke-width="2.5" opacity=".7"/>
@@ -746,10 +792,34 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
         <line x1="560" y1="0" x2="560" y2="500" stroke="#1e2c3e" stroke-width="1.5" opacity=".5"/>
         <line x1="140" y1="0" x2="140" y2="500" stroke="#1e2c3e" stroke-width="1.5" opacity=".5"/>
         <!-- Key nodes -->
-        <g opacity=".7"><circle cx="350" cy="155" r="6" fill="none" stroke="#2498b0" stroke-width="1.5"/><circle cx="350" cy="155" r="2.5" fill="#2498b0"/><text x="350" y="143" text-anchor="middle" fill="#2498b0" font-family="IBM Plex Mono" font-size="7.5" letter-spacing="1">COMMS HUB</text></g>
-        <g opacity=".6"><rect x="185" y="330" width="14" height="10" fill="none" stroke="#489838" stroke-width="1.5"/><text x="192" y="350" text-anchor="middle" fill="#489838" font-family="IBM Plex Mono" font-size="7.5">DOCKS</text></g>
-        <g opacity=".6"><rect x="617" y="218" width="14" height="14" fill="none" stroke="#d04828" stroke-width="1.5"/><text x="624" y="228" text-anchor="middle" fill="#d04828" font-family="IBM Plex Mono" font-size="9" font-weight="bold">+</text><text x="624" y="242" text-anchor="middle" fill="#d04828" font-family="IBM Plex Mono" font-size="7.5">HOSP.</text></g>
-        <g opacity=".6"><rect x="28" y="100" width="18" height="10" fill="none" stroke="#2860c8" stroke-width="1.5"/><text x="37" y="109" text-anchor="middle" fill="#2860c8" font-family="IBM Plex Mono" font-size="7" letter-spacing="0.5">✈ PORT</text></g>
+        <g opacity=".75">
+          <!-- Radio tower: tapered legs, crossbars, antenna + signal arcs -->
+          <line x1="304" y1="120" x2="308" y2="101" stroke="#2498b0" stroke-width="1"/>
+          <line x1="312" y1="120" x2="308" y2="101" stroke="#2498b0" stroke-width="1"/>
+          <line x1="304.8" y1="115" x2="311.2" y2="115" stroke="#2498b0" stroke-width="1"/>
+          <line x1="306" y1="109" x2="310" y2="109" stroke="#2498b0" stroke-width="1"/>
+          <line x1="308" y1="101" x2="308" y2="97" stroke="#2498b0" stroke-width="1.5"/>
+          <path d="M305.5,101 Q308,98 310.5,101" fill="none" stroke="#2498b0" stroke-width="1" opacity=".75"/>
+          <path d="M303.5,103 Q308,98 312.5,103" fill="none" stroke="#2498b0" stroke-width=".8" opacity=".4"/>
+          <text x="308" y="128" text-anchor="middle" fill="#2498b0" font-family="IBM Plex Mono" font-size="7.5" letter-spacing="1">COMMS HUB</text>
+        </g>
+        <g opacity=".7">
+          <rect x="150" y="355" width="24" height="14" fill="rgba(72,152,56,.12)" stroke="#489838" stroke-width="1.4"/>
+          <text x="162" y="379" text-anchor="middle" fill="#489838" font-family="IBM Plex Mono" font-size="7.5">DOCKS</text>
+        </g>
+        <g opacity=".7">
+          <rect x="617" y="218" width="14" height="14" fill="rgba(208,72,40,.08)" stroke="#d04828" stroke-width="1.5"/>
+          <rect x="619" y="223.5" width="10" height="3" fill="#d04828"/>
+          <rect x="622.5" y="219.5" width="3" height="10" fill="#d04828"/>
+          <text x="624" y="244" text-anchor="middle" fill="#d04828" font-family="IBM Plex Mono" font-size="7.5">HOSPITAL</text>
+        </g>
+        <g opacity=".7">
+          <!-- Top-down airplane: fuselage, swept wings, tail fins -->
+          <ellipse cx="37" cy="100" rx="1.8" ry="11" fill="#2860c8"/>
+          <polygon points="37,97 26,105 29,106 37,101 45,106 48,105" fill="#2860c8"/>
+          <polygon points="37,107 33,113 34.5,113 37,110 39.5,113 41,113" fill="#2860c8"/>
+          <text x="37" y="122" text-anchor="middle" fill="#2860c8" font-family="IBM Plex Mono" font-size="7" letter-spacing="0.5">AIRPORT</text>
+        </g>
         <g id="pins-layer"></g>
         <g id="units-layer"></g>
         <!-- Dispatch HQ marker -->
@@ -761,10 +831,6 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
     </div>
     <!-- INCIDENT QUEUE STRIP — bottom of center column -->
     <div class="queue-strip" id="queue-wrap">
-      <div class="comm-sign" id="tba-comms-anchor">
-        <span class="comm-sign-label">Comm Channels</span>
-        <span id="tb-comms-display" class="comm-sign-count" style="color:var(--cyan)">0 / 4</span>
-      </div>
       <div class="panel-header">
         <div class="panel-dot amber"></div>
         <div class="panel-title">Incident Queue</div>
@@ -4416,7 +4482,7 @@ const ITPL_N8 = [
     successFx:{spread:0,legit:1,vol:0},failFx:{spread:1,legit:-1,vol:1}
   },
 
-  // ── LIBERATED DISTRICT — Collection Phase ──────────
+  // ── LIBERATED DISTRICT — Souvenir Shopping ──────────
   {
     id:"N8_LIB_PATROL",family:"Violence",title:"Patrol Report — Collection Site Check",
     district:"__LIBERATED__",severity:1,
@@ -4821,8 +4887,9 @@ function enterGame(night) {
   setTimeout(reapplyLostDistricts, 500);
   if(CARRY.hqRelocated && CARRY.hqDistrict) setTimeout(()=>moveHQMarker(CARRY.hqDistrict), 600);
   loop = setInterval(tick, TICK_MS);
-  // Fire Night 1 tutorial walkthrough on fresh game start
-  if(night === 1) setTimeout(()=>startTut(), 900);
+  applySettings();
+  // Fire Night 1 tutorial walkthrough on fresh game start (unless player opted out)
+  if(night === 1 && localStorage.getItem('nsContainmentTutorials') !== 'off') setTimeout(()=>startTut(), 900);
 }
 
 // ── GAME LOOP ─────────────────────────────────────────
@@ -4897,7 +4964,7 @@ function startNight(night){
 }
 
 function showNightOpeningComms(night){
-  const nightLabels = {1:"Night 1 — Standard Shift",2:"Night 2 — Elevated Alert",3:"Night 3 — Emergency Protocol Active",4:"Night 4 — Emergency Relocation Protocol",5:"Night 5 — Last District Standing",6:"Night 6 — Beachhead",7:"Night 7 — Collection Phase"};
+  const nightLabels = {1:"Night 1 — Standard Shift",2:"Night 2 — Elevated Alert",3:"Night 3 — Emergency Protocol Active",4:"Night 4 — Emergency Relocation Protocol",5:"Night 5 — Last District Standing",6:"Night 6 — Beachhead",7:"Night 7 — Souvenir Shopping"};
   const notes = {
     1:"Day shift flag: Expected heavier activity tonight.",
     2:"Supervisor: Unusual call patterns overnight. All units briefed. Eyes open.",
@@ -5401,6 +5468,7 @@ function dispatch(i,units,posture,tRisk){
   if(hasWrongUnit) setTimeout(()=>notif("⚠ Wrong unit type dispatched — expect difficulty","red"), 600);
   else if(isPartial) setTimeout(()=>notif("⚠ Partial response — "+missingRec.join(", ")+" not assigned","red"), 600);
   units.forEach((uid,idx)=>{ const u=G.units.find(u=>u.id===uid); if(u) setTimeout(()=>addUnitMarker(i.id,uid,u.type,i.timerMs),idx*300); });
+  const dispPin=document.getElementById("pin-"+i.id); if(dispPin) dispPin.classList.add("responded");
   renderQueue(); renderUnits(); topBar();
   setTimeout(()=>showCtxTut("first_dispatch"), 800);
   // Recall tutorial fires shortly after — points at queue where Recall button lives
@@ -6059,7 +6127,7 @@ function resolve(i){
   // Clear limbo ticker if it belongs to this incident
   const _tk=document.getElementById("limbo-ticker");
   if(_tk){ _tk.textContent=""; _tk.style.borderColor="transparent"; }
-  removePin(i.id);
+  flashPinOutcome(i.id, !failed);
   removeUnitMarkers(i.id);
   G.incidents=G.incidents.filter(x=>x.id!==i.id);
   renderQueue(); renderUnits(); topBar();
@@ -9233,6 +9301,11 @@ function addPin(i){
   const g=document.createElementNS("http://www.w3.org/2000/svg","g");
   g.id="pin-"+i.id; g.classList.add("incident-pin");
   g.setAttribute("onclick","openModal('"+i.id+"')");
+  g.setAttribute("data-title", i.title||"");
+  g.setAttribute("data-sev", String(i.severity||1));
+  g.setAttribute("data-district", i.district||"");
+  g.setAttribute("onmouseenter","showPinTip(event,this)");
+  g.setAttribute("onmouseleave","hidePinTip()");
   const sev = i.severity || 1;
   const ringR = sev >= 3 ? 12 : sev >= 2 ? 10 : 8;
   const ringW = sev >= 3 ? 2.5 : sev >= 2 ? 2 : 1.5;
@@ -9244,11 +9317,51 @@ function addPin(i){
     <circle class="pin-ring" cx="${cx}" cy="${cy}" r="${ringR}" fill="none" stroke="${col}" stroke-width="${ringW}"/>
     <circle cx="${cx}" cy="${cy}" r="${ringR-1}" fill="${col}20" stroke="${col}" stroke-width="${ringW}"/>
     <circle cx="${cx}" cy="${cy}" r="3.5" fill="${col}"/>
-    <text x="${cx}" y="${cy-(ringR+4)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="${col}">${famLetter}</text>`;
+    <text x="${cx}" y="${cy-(ringR+4)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="${col}">${famLetter}</text>
+    <circle cx="${cx}" cy="${cy}" r="${ringR+8}" fill="transparent" stroke="none" style="pointer-events:all"/>`;
   layer.appendChild(g);
 }
 
 function removePin(id){const el=document.getElementById("pin-"+id);if(el)el.remove();}
+
+function flashPinOutcome(id, success) {
+  const el = document.getElementById("pin-"+id);
+  if(!el) return;
+  const col = success ? "var(--green)" : "var(--red)";
+  const sym = success ? "✔" : "✖";
+  const circle = el.querySelector("circle");
+  const cx = circle ? parseFloat(circle.getAttribute("cx")) : 380;
+  const cy = circle ? parseFloat(circle.getAttribute("cy")) : 250;
+  el.classList.remove("incident-pin");
+  el.innerHTML = `<circle cx="${cx}" cy="${cy}" r="11" fill="${col}" opacity=".12" stroke="${col}" stroke-width="1.5"/>
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="${col}" font-weight="700">${sym}</text>`;
+  setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 2500);
+}
+
+function showPinTip(e, el) {
+  const tip = document.getElementById("pin-tooltip"); if(!tip) return;
+  const title = el.getAttribute("data-title")||"";
+  const sev = parseInt(el.getAttribute("data-sev")||"1");
+  const dist = el.getAttribute("data-district")||"";
+  const sevLabel = sev>=3?"SEV 3":sev>=2?"SEV 2":"SEV 1";
+  const sevClass = sev>=3?"s3":sev>=2?"s2":"s1";
+  tip.innerHTML = `<span class="pt-sev ${sevClass}">${sevLabel}</span> — ${title}<br><span style="color:var(--text3);font-size:8.5px;letter-spacing:.5px">${dist.toUpperCase()}</span>`;
+  tip.style.display = "block";
+  tip.style.left = (e.clientX+14)+"px";
+  tip.style.top  = (e.clientY+10)+"px";
+}
+function hidePinTip() {
+  const tip = document.getElementById("pin-tooltip"); if(tip) tip.style.display="none";
+}
+
+function showTicker(text, type) {
+  const ticker = document.getElementById("critical-ticker"); if(!ticker) return;
+  const d = document.createElement("div"); d.className = "ticker-msg "+type;
+  const tmp = document.createElement("div"); tmp.innerHTML = text; d.textContent = tmp.textContent;
+  ticker.appendChild(d);
+  setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); }, 5100);
+}
+
 function clickDistrict(d, evt){
   const i=G.incidents.find(x=>x.district===d&&x.status==="Pending");
   if(i){ openModal(i.id); return; }
@@ -9446,6 +9559,7 @@ function comm(type,text){
   d.innerHTML=`<span class="comm-time">${toTime(G.minute)}</span>${text}`;
   feed.appendChild(d); feed.scrollTop=feed.scrollHeight;
   while(feed.children.length>120)feed.removeChild(feed.firstChild);
+  if(type==="alert"||type==="narrative") showTicker(text, type);
 }
 
 function notif(msg,type=""){
@@ -9614,6 +9728,7 @@ function isModalOpen() {
 }
 
 function showCtxTut(key) {
+  if(localStorage.getItem('nsContainmentTutorials') === 'off') return;
   // Night 1 only for original tutorials; new tutorials allowed on any night
   const multiNightTuts = new Set(["first_unit_loss","comms_degraded","trust_intro","first_recall","first_threads_full","first_defend_mission","unit_retreat","spawn_dark","hq_secured","suppressor_intro","fortify_intro","xp_bars_visible","interchange_cleansed","medrow_cleansed","specialist_intro"]);
   if(G.night > 1 && !multiNightTuts.has(key)) return;
@@ -9760,7 +9875,13 @@ function nextTut(){
   if(G._ctxTutMode) { endTut(); return; }
   tutIdx++; applyTut(tutIdx);
 }
-function skipTut(){ endTut(); }
+function skipTut(){
+  // Mark all contextual tutorials as seen so they won't fire this session
+  if(!G.tut_seen) G.tut_seen = new Set();
+  Object.keys(CTX_TUTS).forEach(k => G.tut_seen.add(k));
+  window._tutPending = [];
+  endTut();
+}
 function endTut(){
   const o=document.getElementById("tut-overlay");
   o.classList.remove("tut-active");
@@ -9780,6 +9901,50 @@ function endTut(){
   }
 }
 
+// ── SETTINGS ──────────────────────────────────────────
+const _POS = {
+  tl:{top:'34px', left:'8px',  right:'',    bottom:'',   transform:'none'},
+  tc:{top:'34px', left:'50%',  right:'',    bottom:'',   transform:'translateX(-50%)'},
+  tr:{top:'34px', left:'',     right:'8px', bottom:'',   transform:'none'},
+  bl:{top:'',     left:'8px',  right:'',    bottom:'8px',transform:'none'},
+  bc:{top:'',     left:'50%',  right:'',    bottom:'8px',transform:'translateX(-50%)'},
+  br:{top:'',     left:'',     right:'8px', bottom:'8px',transform:'none'},
+};
+function _applyPos(el, pos){
+  const s = _POS[pos] || _POS.bl;
+  el.style.top=s.top; el.style.left=s.left; el.style.right=s.right; el.style.bottom=s.bottom; el.style.transform=s.transform;
+}
+function applyCommSignPos(pos){
+  const el=document.getElementById('tba-comms-anchor'); if(!el) return;
+  _applyPos(el, pos);
+  document.querySelectorAll('#comm-pos-picker .pos-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('onclick').includes("'"+pos+"'")));
+}
+function applyTickerPos(pos){
+  const el=document.getElementById('critical-ticker'); if(!el) return;
+  _applyPos(el, pos);
+  document.querySelectorAll('#ticker-pos-picker .pos-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('onclick').includes("'"+pos+"'")));
+}
+function setCommPos(pos){ localStorage.setItem('nsContainmentCommPos',pos); applyCommSignPos(pos); }
+function setTickerPos(pos){ localStorage.setItem('nsContainmentTickerPos',pos); applyTickerPos(pos); }
+function toggleTutPref(){
+  const on=localStorage.getItem('nsContainmentTutorials') !== 'off';
+  localStorage.setItem('nsContainmentTutorials', on ? 'off' : 'on');
+  _refreshSettingsUI();
+}
+function _refreshSettingsUI(){
+  const btn=document.getElementById('btn-tut-toggle'); if(!btn) return;
+  const on=localStorage.getItem('nsContainmentTutorials') !== 'off';
+  btn.textContent=on?'ON':'OFF'; btn.classList.toggle('on', on);
+}
+function applySettings(){
+  applyCommSignPos(localStorage.getItem('nsContainmentCommPos')||'bl');
+  applyTickerPos(localStorage.getItem('nsContainmentTickerPos')||'tc');
+  _refreshSettingsUI();
+}
+function openSettings(){ document.getElementById('settings-modal').classList.add('open'); applySettings(); }
+function closeSettings(){ document.getElementById('settings-modal').classList.remove('open'); }
+document.addEventListener('DOMContentLoaded', applySettings);
+
 // ── UTILS ─────────────────────────────────────────────
 function rng(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function toTime(m){const t=22*60+Math.floor(m);return String(Math.floor(t/60)%24).padStart(2,'0')+":"+String(t%60).padStart(2,'0');}
@@ -9787,6 +9952,64 @@ function toTime(m){const t=22*60+Math.floor(m);return String(Math.floor(t/60)%24
 // Init title screen on load
 window.addEventListener("DOMContentLoaded", initTitleScreen);
 </script>
+<div id="pin-tooltip"></div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal">
+  <div class="settings-panel">
+    <div class="settings-hdr">
+      <span class="settings-hdr-title">Settings</span>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-body">
+
+      <!-- Gameplay -->
+      <div class="settings-section">
+        <div class="settings-section-title">Gameplay</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-lbl">Tutorials</div>
+            <div class="settings-row-sub">Step-by-step guidance on Night 1 mechanics</div>
+          </div>
+          <button id="btn-tut-toggle" class="settings-toggle" onclick="toggleTutPref()"></button>
+        </div>
+      </div>
+
+      <!-- Comm Channel Box Position -->
+      <div class="settings-section">
+        <div class="settings-section-title">Comm Channel Display Position</div>
+        <div class="pos-picker-wrap">
+          <div class="pos-screen" id="comm-pos-picker">
+            <button class="pos-btn pos-tl" onclick="setCommPos('tl')" title="Top Left"></button>
+            <button class="pos-btn pos-tc" onclick="setCommPos('tc')" title="Top Center"></button>
+            <button class="pos-btn pos-tr" onclick="setCommPos('tr')" title="Top Right"></button>
+            <button class="pos-btn pos-bl" onclick="setCommPos('bl')" title="Bottom Left"></button>
+            <button class="pos-btn pos-bc" onclick="setCommPos('bc')" title="Bottom Center"></button>
+            <button class="pos-btn pos-br" onclick="setCommPos('br')" title="Bottom Right"></button>
+          </div>
+          <div class="pos-hint">Click a position on the screen diagram to move the Comm Channels box. Default: bottom-left.</div>
+        </div>
+      </div>
+
+      <!-- Critical Alert Ticker Position -->
+      <div class="settings-section">
+        <div class="settings-section-title">Critical Alert Position</div>
+        <div class="pos-picker-wrap">
+          <div class="pos-screen" id="ticker-pos-picker">
+            <button class="pos-btn pos-tl" onclick="setTickerPos('tl')" title="Top Left"></button>
+            <button class="pos-btn pos-tc" onclick="setTickerPos('tc')" title="Top Center"></button>
+            <button class="pos-btn pos-tr" onclick="setTickerPos('tr')" title="Top Right"></button>
+            <button class="pos-btn pos-bl" onclick="setTickerPos('bl')" title="Bottom Left"></button>
+            <button class="pos-btn pos-bc" onclick="setTickerPos('bc')" title="Bottom Center"></button>
+            <button class="pos-btn pos-br" onclick="setTickerPos('br')" title="Bottom Right"></button>
+          </div>
+          <div class="pos-hint">Click a position on the screen diagram to move where critical alerts appear. Default: top-center.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 <div style="position:fixed;bottom:6px;left:8px;font-size:8px;color:rgba(255,255,255,0.2);pointer-events:none;font-family:'Share Tech Mono',monospace;letter-spacing:0.5px;z-index:1;">© Threewire Studios<sup style="font-size:6px;vertical-align:super;">TM</sup> 2026</div>
 </body>
 </html>  {
