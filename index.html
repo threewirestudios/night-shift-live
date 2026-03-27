@@ -9219,6 +9219,11 @@ function addUnitMarker(incId, unitId, unitType, travelMs) {
   g.id = markerId;
   g.style.cursor = "pointer";
   g.setAttribute("onclick", `openModal('${incId}')`);
+  g.setAttribute("data-title", inc.title||"");
+  g.setAttribute("data-sev", String(inc.severity||1));
+  g.setAttribute("data-district", inc.district||"");
+  g.setAttribute("onmouseenter","showPinTip(event,this)");
+  g.setAttribute("onmouseleave","hidePinTip()");
 
   // Draw L-shaped route as a polyline
   const polyline = document.createElementNS("http://www.w3.org/2000/svg","polyline");
