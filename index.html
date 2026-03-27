@@ -739,7 +739,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
           <text class="district-label" x="58" y="121" text-anchor="middle">Interchange</text>
         </g>
         <!-- Riverside -->
-        <g class="district-shape" id="dg-Riverside" onclick="clickDistrict('Riverside')">
+        <g class="district-shape" id="dg-Riverside" onclick="clickDistrict('Riverside')" data-hatch-border="M 37.99,185 L 35.20,339 L 141.91,338 L 137.99,186.04 L 134.08,40.78 L 110,41 L 113,186">
           <path class="district-fill" d="M 110,41 L 134.08,40.78 L 137.99,186.04 L 141.91,338 L 35.20,339 L 37.99,185 L 113,186 Z" fill="#182838" fill-opacity=".38" stroke="none"/>
           <path fill="none" stroke="#253558" stroke-width="1.5" d="M 37.99,185 L 35.20,339 L 141.91,338"/>
           <text class="district-label" x="88" y="262" text-anchor="middle">Riverside</text>
@@ -6168,9 +6168,22 @@ function markDistrictLost(districtName){
       hatch.setAttribute("d", pathEl.getAttribute("d"));
       hatch.setAttribute("fill","url(#lostHatch)");
       hatch.setAttribute("fill-opacity","1");
-      hatch.setAttribute("stroke","rgba(180,30,30,0.7)");
-      hatch.setAttribute("stroke-width","2");
       hatch.classList.add("district-lost-hatch");
+      // Use custom border path if defined (avoids interior step lines on concave districts)
+      const customBorder = el.getAttribute("data-hatch-border");
+      if(customBorder){
+        hatch.setAttribute("stroke","none");
+        const borderPath = document.createElementNS("http://www.w3.org/2000/svg","path");
+        borderPath.setAttribute("d", customBorder);
+        borderPath.setAttribute("fill","none");
+        borderPath.setAttribute("stroke","rgba(180,30,30,0.7)");
+        borderPath.setAttribute("stroke-width","2");
+        borderPath.classList.add("district-lost-hatch");
+        el.appendChild(borderPath);
+      } else {
+        hatch.setAttribute("stroke","rgba(180,30,30,0.7)");
+        hatch.setAttribute("stroke-width","2");
+      }
       el.appendChild(hatch);
     }
     // Update fill to dark red
@@ -7071,6 +7084,8 @@ function fireHQEvac() {
     comm("system","Civic Core — "+i.title+": district voided. Units withdrawing.");
   });
   markDistrictLost("Civic Core");
+  markDistrictLost("Factory Hill");
+  markDistrictLost("Mill Quarter");
 
   comm("alert","⚑ CIVIC CORE COMMAND — ALL UNITS: The perimeter has been breached. We cannot hold this district much longer. Begin evacuation immediately and re-establish an ops center in a still secure district. Get moving.");
   setTimeout(showHQEvacModal, 3000);
@@ -8716,7 +8731,7 @@ function devSetNight(n){
   const hqRow = document.getElementById('dev-hq-row');
   if(hqRow) hqRow.style.display = n >= 5 ? 'block' : 'none';
   const n7Row = document.getElementById('dev-n7-row');
-  if(n7Row) n7Row.style.display = n === 7 ? 'block' : 'none';
+  if(n7Row) n7Row.style.display = n >= 6 ? 'block' : 'none';
 }
 
 function devToggleLiberated(district, checked){
@@ -8866,13 +8881,14 @@ function devLaunch(){
   };
   let devLostDistricts;
   const allDistricts = ["Oldstone","Foundry Ward","Harborline","Civic Core","Docklands",
-                        "Southpoint","Riverside","Ivy District","Med Row","Interchange"];
+                        "Southpoint","Riverside","Ivy District","Med Row","Interchange",
+                        "Factory Hill","Mill Quarter"];
   if(night >= 5) {
     // Night 5+: all districts except chosen HQ are lost
     const hq = DEV.hqDistrict || "Oldstone";
     devLostDistricts = new Set(allDistricts.filter(d => d !== hq));
-    // Night 6: remove any player-liberated districts
-    if(night === 6 && DEV.liberatedDistricts) {
+    // Night 6+: remove any player-liberated districts
+    if(night >= 6 && DEV.liberatedDistricts) {
       DEV.liberatedDistricts.forEach(d => devLostDistricts.delete(d));
     }
   } else {
