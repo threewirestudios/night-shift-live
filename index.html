@@ -868,10 +868,10 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
           </button>
         </div>
         <div class="comm-filter-panel" id="comm-filter-panel">
-          <button class="cf-chip cf-active" onclick="setCommFilter('all')">ALL</button>
-          <button class="cf-chip" onclick="setCommFilter('filter-critical')">CRITICAL</button>
-          <button class="cf-chip" onclick="setCommFilter('filter-dispatch')">DISPATCH</button>
-          <button class="cf-chip" onclick="setCommFilter('filter-field')">FIELD</button>
+          <button class="cf-chip cf-active" data-filter="all" onclick="setCommFilter('all')">ALL</button>
+          <button class="cf-chip" data-filter="filter-critical" onclick="setCommFilter('filter-critical')">CRITICAL</button>
+          <button class="cf-chip" data-filter="filter-dispatch" onclick="setCommFilter('filter-dispatch')">DISPATCH</button>
+          <button class="cf-chip" data-filter="filter-field" onclick="setCommFilter('filter-field')">FIELD</button>
         </div>
         <div class="comms-feed" id="comms-feed"></div>
       </div>
@@ -9649,19 +9649,18 @@ function toggleCommFilterPanel(){
 function setCommFilter(filter){
   const feed = document.getElementById('comms-feed');
   const label = document.getElementById('comm-filter-label');
-  const chips = document.querySelectorAll('.cf-chip');
   if(!feed) return;
   feed.classList.remove('filter-critical','filter-dispatch','filter-field');
   if(filter !== 'all') feed.classList.add(filter);
   const names = {'all':'ALL CHANNELS','filter-critical':'CRITICAL','filter-dispatch':'DISPATCH','filter-field':'FIELD'};
   if(label) label.textContent = names[filter]||'ALL CHANNELS';
-  chips.forEach(c => c.classList.remove('cf-active'));
-  const active = document.querySelector('.cf-chip[onclick="setCommFilter(''+filter+'')"]');
+  document.querySelectorAll('.cf-chip').forEach(c => c.classList.remove('cf-active'));
+  const active = document.querySelector('.cf-chip[data-filter="'+filter+'"]');
   if(active) active.classList.add('cf-active');
+  const panel = document.getElementById('comm-filter-panel');
+  if(panel) panel.classList.remove('open');
   const btn = document.getElementById('comm-filter-btn');
   if(btn) btn.classList.toggle('active', filter !== 'all');
-  const panel = document.getElementById('comm-filter-panel');
-  if(panel) { panel.classList.remove('open'); document.getElementById('comm-filter-btn').classList.remove('active'); }
 }
 
 function resetCommFilter(){
