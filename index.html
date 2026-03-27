@@ -479,7 +479,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.87</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.89</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -732,15 +732,16 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
         </defs>
         <!-- Map background + DALL-E city art -->
         <rect width="760" height="507" fill="#060d16"/>
-        <image href="Cutscene Graphics/Map.png" x="0" y="0" width="760" height="507" preserveAspectRatio="xMidYMid meet"/>
+        <image href="Cutscene Graphics/Map2.png" x="0" y="0" width="760" height="507" preserveAspectRatio="xMidYMid meet"/>
         <!-- Interchange -->
         <g class="district-shape" id="dg-Interchange" onclick="clickDistrict('Interchange')">
-          <path class="district-fill" d="m 0,41.06281 h 133.52397 l 3.91074,144.69752 -99.444627,-0.55868 1.117355,-22.62644 -38.54876031,-52.79504 z" fill="#182030" fill-opacity=".35" stroke="#253558" stroke-width="1.5"/>
+          <path class="district-fill" d="M 0,41 L 110,41 L 113,186 L 38,185 L 39,163 L 1,110 Z" fill="#182030" fill-opacity=".35" stroke="#253558" stroke-width="1.5"/>
           <text class="district-label" x="58" y="121" text-anchor="middle">Interchange</text>
         </g>
         <!-- Riverside -->
         <g class="district-shape" id="dg-Riverside" onclick="clickDistrict('Riverside')">
-          <path class="district-fill" d="m 37.990083,185.48099 -2.793389,153.9157 106.707436,-1.11735 -3.91074,-151.96033 z" fill="#182838" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <path class="district-fill" d="M 110,41 L 134.08,40.78 L 137.99,186.04 L 141.91,338 L 35.20,339 L 37.99,185 L 113,186 Z" fill="#182838" fill-opacity=".38" stroke="none"/>
+          <path fill="none" stroke="#253558" stroke-width="1.5" d="M 37.99,185 L 35.20,339 L 141.91,338"/>
           <text class="district-label" x="88" y="262" text-anchor="middle">Riverside</text>
         </g>
         <!-- Oldstone -->
