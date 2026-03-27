@@ -129,6 +129,8 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .qi-ftag{font-size:8px;font-weight:500;padding:1px 4px;border-radius:1px;text-transform:uppercase;letter-spacing:.8px;}
 .qi-title{font-size:10.5px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .qi-r2{display:flex;justify-content:space-between;font-size:9.5px;color:var(--text3);}
+.qi-r3{max-height:0;overflow:hidden;transition:max-height .15s;font-size:9px;color:var(--text3);font-style:italic;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;margin-top:0;}
+.queue-item:hover .qi-r3{max-height:28px;margin-top:3px;}
 .qi-st{font-family:'Share Tech Mono',monospace;}
 .qi-st.pending{color:var(--amber);}.qi-st.traveling{color:var(--blue);}.qi-st.onscene{color:var(--green);}.qi-st.limbo{color:var(--limbo);}
 .fV{background:rgba(200,56,56,.2);color:var(--red);}
@@ -8467,11 +8469,14 @@ function renderQueue(){
             ${timerBar}
           </div>`;
       }
+      const hoverDetail = (i.commsLines && i.commsLines.length)
+        ? `<div class="qi-r3">${i.commsLines[0].t}</div>`
+        : "";
       const sevLabel = i.severity>=4?"SEV4":i.severity>=3?"SEV3":i.severity>=2?"SEV2":"SEV1";
       const sevColor = i.severity>=4?'sev4':i.severity>=3?'red':i.severity>=2?'orange':'amber';
       const qItemClass = i.isCleanseMission?'qi-cleanse-item':i.isDefendMission?'qi-defend-item':i.isFortifyMission?'qi-fortify-item':'';
       const qTag = i.isCleanseMission?'fC':i.isDefendMission?'fD':i.isFortifyMission?'fF':fcMap[i.family]||'fI';
-      const qTagLabel = i.isCleanseMission?'CLEANSE':i.isDefendMission?'DEFEND':i.isFortifyMission?'FORTIFY':i.family.toUpperCase();
+      const qTagLabel = i.isCleanseMission?'CLEANSE':i.isDefendMission?'DEFEND':i.isFortifyMission?'FORTIFY':(i.family==='Infrastructure'?'INFRA':i.family.toUpperCase());
       return `
         <div class="queue-item ${ld.cls} ${qItemClass} ${i.critFired&&i.status==="Pending"?"qi-urgent":""}"
              onclick="openModal('${i.id}')">
@@ -8486,6 +8491,7 @@ function renderQueue(){
             <span>${i.district} · ${i.assignedUnits.length>0?i.assignedUnits.join(", "):"Unassigned"}</span>
             ${statusText?`<span class="qi-st ${statusCls}">${statusText}</span>`:""}
           </div>
+          ${hoverDetail}
           ${timerBar}
         </div>`;
     }).join("");
