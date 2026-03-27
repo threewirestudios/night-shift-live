@@ -9254,6 +9254,7 @@ function addUnitMarker(incId, unitId, unitType, travelMs) {
   hit.setAttribute("cx", HQ.x);
   hit.setAttribute("cy", HQ.y);
   hit.setAttribute("class","unit-hit");
+  hit.style.pointerEvents = "all";
   g.appendChild(hit);
 
   // Unit label
