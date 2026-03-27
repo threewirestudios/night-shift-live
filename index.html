@@ -182,6 +182,17 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .qi-fortify-item{border-left:3px solid var(--blue)!important;background:rgba(40,120,200,.04)!important;}
 .qi-comms-link{background:none;border:none;color:var(--text3);cursor:pointer;font-size:10px;padding:0 3px;opacity:.6;line-height:1;flex-shrink:0;}
 .qi-comms-link:hover{opacity:1;color:var(--blue);}
+.comm-filter-btn{background:none;border:none;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;padding:0;margin-left:auto;display:flex;align-items:center;gap:3px;transition:color .15s;}
+.comm-filter-btn:hover{color:var(--text2);}
+.comm-filter-btn.active{color:var(--amber);}
+.comm-filter-panel{display:none;position:absolute;top:30px;right:0;left:0;background:var(--bg3);border-bottom:1px solid var(--border2);z-index:30;padding:5px 8px;gap:5px;flex-wrap:wrap;}
+.comm-filter-panel.open{display:flex;}
+.cf-chip{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.8px;padding:3px 8px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;border-radius:1px;transition:all .12s;}
+.cf-chip:hover{border-color:var(--text2);color:var(--text2);}
+.cf-chip.cf-active{border-color:var(--amber);color:var(--amber);background:rgba(200,140,20,.08);}
+#comms-feed.filter-critical .comm-line:not(.system):not(.narrative):not(.alert){display:none;}
+#comms-feed.filter-dispatch .comm-line:not(.system):not(.narrative):not(.dispatch):not(.success){display:none;}
+#comms-feed.filter-field .comm-line:not(.system):not(.narrative):not(.unit):not(.caller){display:none;}
 .qi-recall{float:right;margin-top:3px;padding:2px 8px;background:transparent;border:1px solid var(--amber);
   color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;border-radius:2px;
   letter-spacing:1px;}
@@ -481,7 +492,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.89</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.90</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -848,11 +859,19 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
     </div><!-- /center-col -->
     <!-- RIGHT COMMS PANEL -->
     <div class="right-panels" id="right-panels">
-      <div class="comms-panel" id="comms-wrap">
+      <div class="comms-panel" id="comms-wrap" style="position:relative;">
         <div class="panel-header">
           <div class="panel-dot" id="comms-dot"></div>
           <div class="panel-title">Comms Feed</div>
-          <span style="margin-left:auto;font-size:8px;color:var(--text3);letter-spacing:1px">CROWN HARBOR 911</span>
+          <button class="comm-filter-btn" id="comm-filter-btn" onclick="toggleCommFilterPanel()">
+            <span id="comm-filter-label">ALL CHANNELS</span> ▾
+          </button>
+        </div>
+        <div class="comm-filter-panel" id="comm-filter-panel">
+          <button class="cf-chip cf-active" onclick="setCommFilter('all')">ALL</button>
+          <button class="cf-chip" onclick="setCommFilter('filter-critical')">CRITICAL</button>
+          <button class="cf-chip" onclick="setCommFilter('filter-dispatch')">DISPATCH</button>
+          <button class="cf-chip" onclick="setCommFilter('filter-field')">FIELD</button>
         </div>
         <div class="comms-feed" id="comms-feed"></div>
       </div>
@@ -4889,7 +4908,7 @@ function enterGame(night) {
   document.getElementById("game-screen").classList.add("active");
   initState(night);
   applyExtraUnitFromCarry();
-  document.getElementById("comms-feed").innerHTML = "";
+  document.getElementById("comms-feed").innerHTML = ""; resetCommFilter();
   document.getElementById("pins-layer").innerHTML = "";
   document.getElementById("units-layer").innerHTML = "";
   renderUnits(); renderQueue();
@@ -4921,7 +4940,7 @@ function startNight(night){
   initState(night);
   applyExtraUnitFromCarry(); // add any earned unit to roster
   // Clear comms feed before new night opens
-  document.getElementById("comms-feed").innerHTML="";
+  document.getElementById("comms-feed").innerHTML=""; resetCommFilter();
   // Night 5: full city collapse — everything outside HQ fell while units were pulled back to Civic Core
   if(night === 5 && !CARRY._n5CollapseApplied) {
     CARRY._n5CollapseApplied = true;
@@ -9617,6 +9636,36 @@ function comm(type,text,incId){
   feed.appendChild(d); feed.scrollTop=feed.scrollHeight;
   while(feed.children.length>120)feed.removeChild(feed.firstChild);
   if(type==="alert"||type==="narrative") showTicker(text, type);
+}
+
+function toggleCommFilterPanel(){
+  const panel = document.getElementById('comm-filter-panel');
+  const btn = document.getElementById('comm-filter-btn');
+  if(!panel) return;
+  panel.classList.toggle('open');
+  btn.classList.toggle('active', panel.classList.contains('open'));
+}
+
+function setCommFilter(filter){
+  const feed = document.getElementById('comms-feed');
+  const label = document.getElementById('comm-filter-label');
+  const chips = document.querySelectorAll('.cf-chip');
+  if(!feed) return;
+  feed.classList.remove('filter-critical','filter-dispatch','filter-field');
+  if(filter !== 'all') feed.classList.add(filter);
+  const names = {'all':'ALL CHANNELS','filter-critical':'CRITICAL','filter-dispatch':'DISPATCH','filter-field':'FIELD'};
+  if(label) label.textContent = names[filter]||'ALL CHANNELS';
+  chips.forEach(c => c.classList.remove('cf-active'));
+  const active = document.querySelector('.cf-chip[onclick="setCommFilter(''+filter+'')"]');
+  if(active) active.classList.add('cf-active');
+  const btn = document.getElementById('comm-filter-btn');
+  if(btn) btn.classList.toggle('active', filter !== 'all');
+  const panel = document.getElementById('comm-filter-panel');
+  if(panel) { panel.classList.remove('open'); document.getElementById('comm-filter-btn').classList.remove('active'); }
+}
+
+function resetCommFilter(){
+  setCommFilter('all');
 }
 
 function scrollToIncComms(incId){
