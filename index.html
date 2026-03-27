@@ -73,6 +73,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .pin-ring{animation:ping 2.2s cubic-bezier(0,0,.2,1) infinite;}
 @keyframes ping{0%{r:9;opacity:.8}70%{r:18;opacity:0}100%{r:18;opacity:0}}
 .incident-pin.responded .pin-ring{animation:none;opacity:.25;}
+.comm-line.comm-linked{background:rgba(80,140,255,.12);border-left:2px solid #4a8cff;margin-left:-2px;transition:background .2s;}
 .incident-pin.responded{pointer-events:bounding-box;}
 #pin-tooltip{position:fixed;pointer-events:none;background:rgba(4,10,20,.94);border:1px solid var(--border2);padding:5px 10px;font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text);line-height:1.65;z-index:200;display:none;white-space:nowrap;}
 #pin-tooltip .pt-sev{font-weight:700;letter-spacing:1px;}
@@ -177,6 +178,8 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .qi-defend-item{border-left:3px solid var(--amber)!important;background:rgba(200,140,20,.04)!important;}
 .qi-cleanse-item{border-left:3px solid var(--sev4)!important;background:rgba(152,72,216,.04)!important;}
 .qi-fortify-item{border-left:3px solid var(--blue)!important;background:rgba(40,120,200,.04)!important;}
+.qi-comms-link{background:none;border:none;color:var(--text3);cursor:pointer;font-size:10px;padding:0 3px;opacity:.6;line-height:1;flex-shrink:0;}
+.qi-comms-link:hover{opacity:1;color:var(--blue);}
 .qi-recall{float:right;margin-top:3px;padding:2px 8px;background:transparent;border:1px solid var(--amber);
   color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;border-radius:2px;
   letter-spacing:1px;}
@@ -476,7 +479,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.80</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.87</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -4720,6 +4723,7 @@ let CARRY = {
   commsDegraded: false,
   unitLost: null,
   spreadHistory: [],
+  legitHistory: [],
   tut_seen: new Set(),
   lostDistricts: new Set(),   // districts permanently lost until reclaimed
   hqDistrict: "Civic Core",   // HQ location — relocates after Night 5
@@ -4862,6 +4866,7 @@ function continueGame() {
   const save = loadSave();
   if(!save) return;
   CARRY = save.carry;
+  CARRY.legitHistory = CARRY.legitHistory || [];
   enterGame(save.night);
 }
 
@@ -4871,7 +4876,7 @@ function newGame() {
     if(!confirm("Start a new shift? Your Night "+save.night+" save will be lost.")) return;
     clearSave();
   }
-  CARRY = { legit:10, shiftChoices:[], choiceData:[], commsDegraded:false, unitLost:null, spreadHistory:[], tut_seen:new Set(), lostDistricts:new Set(), hqDistrict:"Civic Core" };
+  CARRY = { legit:10, shiftChoices:[], choiceData:[], commsDegraded:false, unitLost:null, spreadHistory:[], legitHistory:[], tut_seen:new Set(), lostDistricts:new Set(), hqDistrict:"Civic Core" };
   enterGame(1);
 }
 
@@ -5250,11 +5255,11 @@ function spawn(tpl){
 
   G.incidents.push(i);
   if(i.isSpawnDark) {
-    setTimeout(()=>comm("alert","⚑ SIGNAL LOST — "+i.district+": Incoming call. Type and severity unknown."),200);
+    setTimeout(()=>comm("alert","⚑ SIGNAL LOST — "+i.district+": Incoming call. Type and severity unknown.",i.id),200);
     i._commsPlayed = true; // suppress normal commsLines — player doesn't know what it is yet
   } else {
     const sevLabel = i.severity>=3?"⚑ PRIORITY — SEV3: ":i.severity>=2?"⚑ PRIORITY: ":"⚑ ";
-    setTimeout(()=>comm("alert",sevLabel+i.title+" — "+i.district),200);
+    setTimeout(()=>comm("alert",sevLabel+i.title+" — "+i.district,i.id),200);
   }
   // Resolve placeholders in commsLines — fire once only (guard against re-spawn)
   if(!i._commsPlayed){
@@ -5264,7 +5269,7 @@ function spawn(tpl){
         const resolved = resolveLine(l.t, i.assignedUnits[0]||"");
         const cls=l.s==="Caller"?"caller":l.s==="Dispatch"?"dispatch":l.s==="PW Dispatch"?"dispatch":l.s==="Supervisor"?"system":"unit";
         const speaker = resolveLine(l.s, i.assignedUnits[0]||"");
-        comm(cls, speaker+": "+resolved);
+        comm(cls, speaker+": "+resolved, i.id);
       },900+idx*1500);
     });
   }
@@ -5289,12 +5294,17 @@ function tickPending(i, dt) {
   const w = i.pendingWindow;
   const pct = elapsed / w;
 
+  // Continuous pulse escalation: 2.2s fresh -> 0.7s critical
+  const dur = Math.max(0.7, 2.2 - pct * 1.5).toFixed(2) + "s";
+  const pinG = document.getElementById("pin-" + i.id);
+  if(pinG) pinG.querySelectorAll(".pin-ring").forEach(r => { if(!r.style.animationName || r.style.animationName !== "none") r.style.animationDuration = dur; });
+
   // ── 50% warning: gentle nudge
   if(!i.warnFired && pct >= WARN_THRESHOLD) {
     i.warnFired = true;
     const lines = PENDING_WARN_LINES[i.id] || PENDING_WARN_LINES["_default"];
     const line = lines ? lines[0] : "Dispatch: "+i.title+" in "+i.district+" — still unassigned.";
-    comm("caller", line);
+    comm("caller", line, i.id);
     setPinUrgency(i.id, "warn");
     renderQueue();
     setTimeout(()=>showCtxTut("first_pending_warn"), 400);
@@ -5304,7 +5314,7 @@ function tickPending(i, dt) {
   if(!i.critFired && pct >= CRIT_THRESHOLD) {
     i.critFired = true;
     const line = PENDING_CRIT_LINES[i.id] || i.title + " — " + i.district + ": situation worsening. Response needed urgently.";
-    comm("alert", line);
+    comm("alert", line, i.id);
     setPinUrgency(i.id, "crit");
     notif("Urgent: "+i.title+" needs a response","red");
     renderQueue();
@@ -5325,7 +5335,7 @@ function pendingTimeout(i) {
   const sev3Cost = -2;
   const trustDelta = i.severity >= 3 ? sev3Cost : (willEscalate ? -1 : sev1Cost);
 
-  comm("alert", "✖ "+i.title+" — "+i.district+": no response before the situation closed out.");
+  comm("alert", "✖ "+i.title+" — "+i.district+": no response before the situation closed out.", i.id);
   G.legit = Math.max(0, G.legit + trustDelta);
 
   const trustMsg = G.legit <= 4
@@ -5467,7 +5477,7 @@ function dispatch(i,units,posture,tRisk){
   const isStrategicOp = i.isFortifyMission || i.isCleanseMission || i.isCollectionMission;
   if(!isStrategicOp) { G.threadsUsed++; i.threadSlots = (i.threadSlots||0) + 1; }
   else { i.threadSlots = 0; } // strategic ops share no comm channel
-  comm("dispatch","Dispatch: "+units.join(", ")+" responding to "+i.district+". Posture: "+posture+".");
+  comm("dispatch","Dispatch: "+units.join(", ")+" responding to "+i.district+". Posture: "+posture+".", i.id);
   if(hasWrongUnit) setTimeout(()=>notif("⚠ Wrong unit type dispatched — expect difficulty","red"), 600);
   else if(isPartial) setTimeout(()=>notif("⚠ Partial response — "+missingRec.join(", ")+" not assigned","red"), 600);
   units.forEach((uid,idx)=>{ const u=G.units.find(u=>u.id===uid); if(u) setTimeout(()=>addUnitMarker(i.id,uid,u.type,i.timerMs),idx*300); });
@@ -7141,6 +7151,8 @@ function endShift(){
     return;
   }
   // Commit trust to carry-forward
+  if(!CARRY.legitHistory) CARRY.legitHistory = [];
+  CARRY.legitHistory.push(G.legit);
   CARRY.legit = G.legit;
   CARRY.spreadHistory.push(G.spread);
   CARRY.tut_seen = G.tut_seen || new Set();
@@ -7472,15 +7484,26 @@ function showDebrief(){
   }
 
   // ── METRICS ROW ──────────────────────────────────────
+  const trustDeltaHtml = (()=>{
+    const hist = CARRY.legitHistory || [];
+    if(!hist.length) return "";
+    const prev = hist[hist.length - 1];
+    const delta = G.legit - prev;
+    if(delta === 0) return `<div style="font-size:8px;color:var(--text3);margin-top:3px">─ no change</div>`;
+    const col = delta > 0 ? "var(--green)" : "var(--red)";
+    const arrow = delta > 0 ? "▲" : "▼";
+    return `<div style="font-size:8px;color:${col};margin-top:3px">${arrow} ${Math.abs(delta)} from last night</div>`;
+  })();
   const metrics = [
-    {val:G.resolvedCt, lbl:"Resolved", cls: G.resolvedCt>=3?"good":G.resolvedCt>=1?"warn":"bad"},
-    {val:G.failedCt,   lbl:"Failed",   cls: G.failedCt===0?"good":G.failedCt<=2?"warn":"bad"},
-    {val:trustPct(),   lbl:"Trust",    cls: G.legit>=9?"good":G.legit>=6?"warn":"bad"},
+    {val:G.resolvedCt, lbl:"Resolved", cls: G.resolvedCt>=3?"good":G.resolvedCt>=1?"warn":"bad", sub:""},
+    {val:G.failedCt,   lbl:"Failed",   cls: G.failedCt===0?"good":G.failedCt<=2?"warn":"bad", sub:""},
+    {val:trustPct(),   lbl:"Trust",    cls: G.legit>=9?"good":G.legit>=6?"warn":"bad", sub:trustDeltaHtml},
   ];
   document.getElementById("db-metrics").innerHTML = metrics.map(m=>
     `<div class="db-metric ${m.cls}">
       <div class="db-metric-val">${m.val}</div>
       <div class="db-metric-lbl">${m.lbl}</div>
+      ${m.sub}
     </div>`).join("");
 
   // ── SHIFT NOTES ──────────────────────────────────────
@@ -8357,7 +8380,7 @@ function renderUnits(){
       <div class="uc-name">${u.name}</div>
       <div class="uc-type">${u.id}</div>
       <div class="uc-stats">
-        <span class="uc-stat ${u.readiness.toLowerCase()}" title="Readiness">${u.readiness.charAt(0)}</span>
+        <span class="uc-stat ${u.readiness.toLowerCase()}" title="${u.readiness==='Red'?'Critically fatigued — higher chance of failure, responds slower. Rest if possible.':u.readiness==='Yellow'?'Worn down — slightly higher chance of complications on next call.':'Rested — full reliability.'}${u._shakenThisNight?' (shaken — needs treatment)':''}">●</span>
         <span class="uc-stat ${statusColor} ${statusFlashClass}" title="Status">${statusLabel}</span>
       </div>
       <div class="uc-posture">${u.posture}</div>
@@ -8369,7 +8392,7 @@ function renderUnits(){
 }
 
 function renderQueue(){
-  const active=G.incidents.filter(i=>!["Resolved","Failed"].includes(i.status));
+  const active=G.incidents.filter(i=>!["Resolved","Failed"].includes(i.status)).slice().reverse();
   const fcMap={Violence:"fV",Medical:"fM",FireHazard:"fF",Infrastructure:"fI"};
   const stL={Pending:"pending",Traveling:"traveling",OnScene:"onscene",Limbo:"limbo"};
   const stV={Traveling:"IN TRANSIT",OnScene:"ON SCENE"};
@@ -8418,6 +8441,7 @@ function renderQueue(){
               <span class="qi-ftag fI" style="background:rgba(20,50,90,.4);color:rgba(80,140,200,.85);border-color:rgba(50,100,160,.6)">SIGNAL LOST</span>
               <span class="qi-title" style="color:var(--text3)">Unknown Incident</span>
               <span style="font-size:9px;color:var(--text3)">— / —</span>
+              <button class="qi-comms-link" onclick="event.stopPropagation();scrollToIncComms('${i.id}')" title="Scroll to comms">◉</button>
               ${recallBtn}
             </div>
             <div class="qi-r2">
@@ -8439,6 +8463,7 @@ function renderQueue(){
             <span class="qi-ftag ${qTag}">${qTagLabel}</span>
             <span class="qi-title">${i.title}</span>
             <span style="font-size:9px;color:var(--${sevColor})">${sevLabel}</span>
+            <button class="qi-comms-link" onclick="event.stopPropagation();scrollToIncComms('${i.id}')" title="Scroll to comms">◉</button>
             ${recallBtn}
           </div>
           <div class="qi-r2">
@@ -8811,6 +8836,7 @@ function devPreviewBriefing(night){
     lostDistricts: new Set(["Interchange","Med Row","Docklands","Southpoint","Riverside","Foundry Ward","Civic Core","Factory Hill","Mill Quarter"]),
     choiceData: [{l:"Evolve Police Unit — Fortify Protocol"}],
     _usedQuips: new Set(),
+    legitHistory: [],
     buffs: {}
   };
 
@@ -8860,6 +8886,7 @@ function devLaunch(){
     commsDegraded: DEV.comms,
     unitLost: null,
     spreadHistory: [],
+    legitHistory: [],
     tut_seen: new Set(), // skip all tutorials in dev mode
     _usedQuips: new Set(),
     lostDistricts: devLostDistricts,
@@ -9559,13 +9586,24 @@ function resolveCleanseSuccess(i) {
 function clickUnit(uid){document.querySelectorAll(".unit-card").forEach(c=>c.classList.remove("selected"));document.getElementById("ucard-"+uid)?.classList.add("selected");}
 
 // ── COMMS & NOTIFS ────────────────────────────────────
-function comm(type,text){
+function comm(type,text,incId){
   const feed=document.getElementById("comms-feed");
   const d=document.createElement("div"); d.className="comm-line "+type;
+  if(incId) d.dataset.incId=incId;
   d.innerHTML=`<span class="comm-time">${toTime(G.minute)}</span>${text}`;
   feed.appendChild(d); feed.scrollTop=feed.scrollHeight;
   while(feed.children.length>120)feed.removeChild(feed.firstChild);
   if(type==="alert"||type==="narrative") showTicker(text, type);
+}
+
+function scrollToIncComms(incId){
+  const feed=document.getElementById("comms-feed");
+  feed.querySelectorAll(".comm-linked").forEach(el=>el.classList.remove("comm-linked"));
+  const matches=feed.querySelectorAll(`[data-inc-id="${incId}"]`);
+  if(!matches.length){notif("No comms logged yet for this incident","");return;}
+  matches.forEach(el=>el.classList.add("comm-linked"));
+  matches[0].scrollIntoView({behavior:"smooth",block:"nearest"});
+  setTimeout(()=>matches.forEach(el=>el.classList.remove("comm-linked")),3000);
 }
 
 function notif(msg,type=""){
@@ -9941,6 +9979,14 @@ function _refreshSettingsUI(){
   const btn=document.getElementById('btn-tut-toggle'); if(!btn) return;
   const on=localStorage.getItem('nsContainmentTutorials') !== 'off';
   btn.textContent=on?'ON':'OFF'; btn.classList.toggle('on', on);
+  const kbdBtn=document.getElementById('btn-kbd-toggle'); if(!kbdBtn) return;
+  const kbdOn=localStorage.getItem('nsContainmentKeyboard') !== 'off';
+  kbdBtn.textContent=kbdOn?'ON':'OFF'; kbdBtn.classList.toggle('on', kbdOn);
+}
+function toggleKbdPref(){
+  const on=localStorage.getItem('nsContainmentKeyboard') !== 'off';
+  localStorage.setItem('nsContainmentKeyboard', on ? 'off' : 'on');
+  _refreshSettingsUI();
 }
 function applySettings(){
   applyCommSignPos(localStorage.getItem('nsContainmentCommPos')||'bl');
@@ -9957,6 +10003,29 @@ function toTime(m){const t=22*60+Math.floor(m);return String(Math.floor(t/60)%24
 
 // Init title screen on load
 window.addEventListener("DOMContentLoaded", initTitleScreen);
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────
+// Space = pause/unpause | 1 = 1x speed | 2 = 2x speed
+document.addEventListener("keydown", function(e) {
+  const tag = document.activeElement && document.activeElement.tagName;
+  if(tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+  if(typeof G === "undefined" || G.speed === undefined) return;
+
+  if(localStorage.getItem('nsContainmentKeyboard') === 'off') return;
+  if(e.code === "Space") {
+    e.preventDefault();
+    if(G.speed === 0) {
+      setSpeed(G._preSpaceSpeed || 1);
+    } else {
+      G._preSpaceSpeed = G.speed;
+      setSpeed(0);
+    }
+  } else if(e.key === "1") {
+    setSpeed(1);
+  } else if(e.key === "2") {
+    setSpeed(2);
+  }
+});
 </script>
 <div id="pin-tooltip"></div>
 
@@ -9978,6 +10047,18 @@ window.addEventListener("DOMContentLoaded", initTitleScreen);
             <div class="settings-row-sub">Step-by-step guidance on Night 1 mechanics</div>
           </div>
           <button id="btn-tut-toggle" class="settings-toggle" onclick="toggleTutPref()"></button>
+        </div>
+        <div class="settings-row" style="align-items:flex-start;">
+          <div>
+            <div class="settings-row-lbl">Keyboard Shortcuts</div>
+            <div class="settings-row-sub">Control playback without the mouse</div>
+            <div class="settings-row-sub" style="margin-top:6px;line-height:2;">
+              <span style="color:var(--text2);font-family:'Share Tech Mono',monospace;">Space</span> &nbsp;Pause / Resume<br>
+              <span style="color:var(--text2);font-family:'Share Tech Mono',monospace;">1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&times; Speed<br>
+              <span style="color:var(--text2);font-family:'Share Tech Mono',monospace;">2</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&times; Speed
+            </div>
+          </div>
+          <button id="btn-kbd-toggle" class="settings-toggle on" onclick="toggleKbdPref()">ON</button>
         </div>
       </div>
 
