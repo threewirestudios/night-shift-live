@@ -827,8 +827,8 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
           <polygon points="68,79.4 64.2,84.2 65.4,84.2 68,81.8 70.6,84.2 72.2,84.2" fill="#2860c8"/>
           <text x="68" y="92" text-anchor="middle" fill="#2860c8" font-family="IBM Plex Mono" font-size="6.5" letter-spacing="0.5">AIRPORT</text>
         </g>
-        <g id="pins-layer"></g>
         <g id="units-layer"></g>
+        <g id="pins-layer"></g>
         <!-- Dispatch HQ marker — Civic Core -->
         <g id="hq-marker" opacity=".7">
           <rect x="319" y="152" width="18" height="18" fill="#0c1420" stroke="#e09818" stroke-width="1.5"/>
@@ -9219,11 +9219,6 @@ function addUnitMarker(incId, unitId, unitType, travelMs) {
   g.id = markerId;
   g.style.cursor = "pointer";
   g.setAttribute("onclick", `openModal('${incId}')`);
-  g.setAttribute("data-title", inc.title||"");
-  g.setAttribute("data-sev", String(inc.severity||1));
-  g.setAttribute("data-district", inc.district||"");
-  g.setAttribute("onmouseenter","showPinTip(event,this)");
-  g.setAttribute("onmouseleave","hidePinTip()");
 
   // Draw L-shaped route as a polyline
   const polyline = document.createElementNS("http://www.w3.org/2000/svg","polyline");
@@ -9254,7 +9249,6 @@ function addUnitMarker(incId, unitId, unitType, travelMs) {
   hit.setAttribute("cx", HQ.x);
   hit.setAttribute("cy", HQ.y);
   hit.setAttribute("class","unit-hit");
-  hit.style.pointerEvents = "all";
   g.appendChild(hit);
 
   // Unit label
