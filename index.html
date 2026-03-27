@@ -472,11 +472,11 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 <!-- TITLE -->
 <div id="title-screen" class="screen active">
   <div class="title-bg"></div>
-  <img class="title-bkgd-img" src="../Cutscene Graphics/Opening Screen Bkgd.png" alt="">
+  <img class="title-bkgd-img" src="Cutscene Graphics/Opening Screen Bkgd.png" alt="">
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.79</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.80</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -727,105 +727,106 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
             <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(200,40,40,0.55)" stroke-width="3"/>
           </pattern>
         </defs>
-        <rect width="760" height="500" fill="#070e16"/>
-        <path d="M0,330 Q160,300 280,350 Q420,395 520,375 Q640,355 760,390 L760,500 L0,500 Z" fill="#091620" opacity=".9"/>
-        <g stroke="#111e2c" stroke-width=".5" opacity=".5">
-          <line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="200" x2="760" y2="200"/>
-          <line x1="0" y1="280" x2="760" y2="280"/><line x1="140" y1="0" x2="140" y2="500"/>
-          <line x1="280" y1="0" x2="280" y2="500"/><line x1="420" y1="0" x2="420" y2="500"/>
-          <line x1="560" y1="0" x2="560" y2="500"/><line x1="700" y1="0" x2="700" y2="500"/>
-        </g>
-        <!-- Civic Core -->
-        <g class="district-shape" id="dg-CivicCore" onclick="clickDistrict('Civic Core')">
-          <path class="district-fill" d="M280,80 L420,80 L420,200 L280,200 Z" fill="#1a2840" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="350" y="190" text-anchor="middle">Civic Core</text>
-        </g>
-        <!-- Oldstone -->
-        <g class="district-shape" id="dg-Oldstone" onclick="clickDistrict('Oldstone')">
-          <path class="district-fill" d="M140,80 L280,80 L280,210 L140,210 Z" fill="#182838" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="210" y="153" text-anchor="middle">Oldstone</text>
-        </g>
-        <!-- Harborline -->
-        <g class="district-shape" id="dg-Harborline" onclick="clickDistrict('Harborline')">
-          <path class="district-fill" d="M270,200 L430,200 L450,310 L250,310 Z" fill="#1c2038" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="355" y="260" text-anchor="middle">Harborline</text>
-        </g>
-        <!-- Foundry Ward -->
-        <g class="district-shape" id="dg-FoundryWard" onclick="clickDistrict('Foundry Ward')">
-          <path class="district-fill" d="M420,80 L560,80 L560,190 L420,190 Z" fill="#1a2830" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="490" y="140" text-anchor="middle">Foundry Ward</text>
-        </g>
-        <!-- Docklands -->
-        <g class="district-shape" id="dg-Docklands" onclick="clickDistrict('Docklands')">
-          <path class="district-fill" d="M140,290 L310,290 L290,390 L140,380 Z" fill="#182030" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="218" y="343" text-anchor="middle">Docklands</text>
-        </g>
-        <!-- Southpoint -->
-        <g class="district-shape" id="dg-Southpoint" onclick="clickDistrict('Southpoint')">
-          <path class="district-fill" d="M430,190 L580,190 L600,330 L410,330 Z" fill="#18203a" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="505" y="265" text-anchor="middle">Southpoint</text>
+        <!-- Map background + DALL-E city art -->
+        <rect width="760" height="507" fill="#060d16"/>
+        <image href="Cutscene Graphics/Map.png" x="0" y="0" width="760" height="507" preserveAspectRatio="xMidYMid meet"/>
+        <!-- Interchange -->
+        <g class="district-shape" id="dg-Interchange" onclick="clickDistrict('Interchange')">
+          <path class="district-fill" d="m 0,41.06281 h 133.52397 l 3.91074,144.69752 -99.444627,-0.55868 1.117355,-22.62644 -38.54876031,-52.79504 z" fill="#182030" fill-opacity=".35" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="58" y="121" text-anchor="middle">Interchange</text>
         </g>
         <!-- Riverside -->
         <g class="district-shape" id="dg-Riverside" onclick="clickDistrict('Riverside')">
-          <path class="district-fill" d="M110,80 L140,80 L140,350 L20,350 L20,210 L110,210 Z" fill="#182838" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="75" y="295" text-anchor="middle">Riverside</text>
+          <path class="district-fill" d="m 37.990083,185.48099 -2.793389,153.9157 106.707436,-1.11735 -3.91074,-151.96033 z" fill="#182838" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="88" y="262" text-anchor="middle">Riverside</text>
+        </g>
+        <!-- Oldstone -->
+        <g class="district-shape" id="dg-Oldstone" onclick="clickDistrict('Oldstone')">
+          <path class="district-fill" d="m 134.08264,40.783471 165.3686,0.558678 -3.63141,143.580161 -157.82644,1.11736 z" fill="#182838" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="217" y="113" text-anchor="middle">Oldstone</text>
+        </g>
+        <!-- Factory Hill (new) -->
+        <g class="district-shape" id="dg-FactoryHill" onclick="clickDistrict('Factory Hill')">
+          <path class="district-fill" d="m 137.99339,187.15702 2.79339,91.34381 h 144.97686 l 30.16859,-90.50579 -19.55372,-2.79339 z" fill="#182030" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="235" y="224" text-anchor="middle">Factory Hill</text>
+        </g>
+        <!-- Docklands -->
+        <g class="district-shape" id="dg-Docklands" onclick="clickDistrict('Docklands')">
+          <path class="district-fill" d="m 140.50744,279.89752 3.6314,127.09917 143.85951,16.481 36.31405,-90.78513 -10.33554,-5.30744 -44.69422,-0.27933 16.481,-48.8843 z" fill="#182030" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="225" y="375" text-anchor="middle">Docklands</text>
+        </g>
+        <!-- Civic Core -->
+        <g class="district-shape" id="dg-CivicCore" onclick="clickDistrict('Civic Core')">
+          <path class="district-fill" d="m 299.1719,41.06281 h 170.11736 l 1.67603,145.53554 -155.87108,1.39669 -18.7157,-3.35206 z" fill="#1a2840" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="415" y="145" text-anchor="middle">Civic Core</text>
+        </g>
+        <!-- Harborline -->
+        <g class="district-shape" id="dg-Harborline" onclick="clickDistrict('Harborline')">
+          <path class="district-fill" d="m 315.65289,188.27438 -45.81157,138.55207 44.41488,0.27934 8.38016,5.30743 132.40662,-0.27934 11.73223,-62.01322 3.6314,-3.35206 0.83802,-79.89091 z" fill="#1c2038" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="386" y="279" text-anchor="middle">Harborline</text>
+        </g>
+        <!-- Foundry Ward -->
+        <g class="district-shape" id="dg-FoundryWard" onclick="clickDistrict('Foundry Ward')">
+          <path class="district-fill" d="M 470.40661,40.783471 593.3157,41.342149 603.93058,165.3686 470.96529,158.38512 z" fill="#1a2830" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="535" y="102" text-anchor="middle">Foundry Ward</text>
+        </g>
+        <!-- Mill Quarter (new) -->
+        <g class="district-shape" id="dg-MillQuarter" onclick="clickDistrict('Mill Quarter')">
+          <path class="district-fill" d="m 471.80331,159.22314 -0.27934,26.53719 12.84958,0.27934 25.41984,76.81818 110.89752,-9.77686 -5.0281,-67.87934 -8.93884,0.55868 -3.07273,-19.83306 z" fill="#1a2030" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="548" y="198" text-anchor="middle">Mill Quarter</text>
+        </g>
+        <!-- Southpoint -->
+        <g class="district-shape" id="dg-Southpoint" onclick="clickDistrict('Southpoint')">
+          <path class="district-fill" d="m 470.96529,187.99504 0.55868,79.05289 -4.19009,3.35207 -18.7157,101.12066 186.59835,-9.49752 -14.80496,-108.38347 -110.89752,9.77686 -24.86116,-76.81818 -12.84958,-0.55868 z" fill="#18203a" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="530" y="300" text-anchor="middle">Southpoint</text>
         </g>
         <!-- Ivy District -->
         <g class="district-shape" id="dg-IvyDistrict" onclick="clickDistrict('Ivy District')">
-          <path class="district-fill" d="M560,80 L700,80 L700,200 L560,200 Z" fill="#162838" fill-opacity=".45" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="630" y="146" text-anchor="middle">Ivy District</text>
+          <path class="district-fill" d="m 593.59504,40.504132 124.86446,0.558678 25.97852,145.2562 -128.77521,0.27934 v -1.67604 l -8.38017,0.27934 -2.51404,-18.99504 z" fill="#162838" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="668" y="130" text-anchor="middle">Ivy District</text>
         </g>
         <!-- Med Row -->
         <g class="district-shape" id="dg-MedRow" onclick="clickDistrict('Med Row')">
-          <path class="district-fill" d="M560,200 L700,200 L700,310 L560,310 Z" fill="#182040" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="630" y="268" text-anchor="middle">Med Row</text>
+          <path class="district-fill" d="m 615.94215,187.15702 4.74876,65.08596 10.0562,78.21487 79.05289,-8.6595 35.47603,-7.26281 -0.83801,-127.93719 z" fill="#182040" fill-opacity=".35" stroke="#253558" stroke-width="1.5"/>
+          <text class="district-label" x="678" y="266" text-anchor="middle">Med Row</text>
         </g>
-        <!-- Interchange -->
-        <g class="district-shape" id="dg-Interchange" onclick="clickDistrict('Interchange')">
-          <path class="district-fill" d="M20,80 L110,80 L110,210 L20,210 Z" fill="#182030" fill-opacity=".38" stroke="#253558" stroke-width="1.5"/>
-          <text class="district-label" x="65" y="147" text-anchor="middle">Interchange</text>
-        </g>
-        <!-- Roads -->
-        <line x1="0" y1="200" x2="760" y2="200" stroke="#1e2c3e" stroke-width="2.5" opacity=".7"/>
-        <line x1="280" y1="0" x2="280" y2="500" stroke="#1e2c3e" stroke-width="2" opacity=".6"/>
-        <line x1="420" y1="0" x2="420" y2="500" stroke="#1e2c3e" stroke-width="1.5" opacity=".5"/>
-        <line x1="560" y1="0" x2="560" y2="500" stroke="#1e2c3e" stroke-width="1.5" opacity=".5"/>
-        <line x1="140" y1="0" x2="140" y2="500" stroke="#1e2c3e" stroke-width="1.5" opacity=".5"/>
         <!-- Key nodes -->
+        <!-- COMMS HUB (radio tower) — Civic Core -->
         <g opacity=".75">
-          <!-- Radio tower: tapered legs, crossbars, antenna + signal arcs -->
-          <line x1="304" y1="120" x2="308" y2="101" stroke="#2498b0" stroke-width="1"/>
-          <line x1="312" y1="120" x2="308" y2="101" stroke="#2498b0" stroke-width="1"/>
-          <line x1="304.8" y1="115" x2="311.2" y2="115" stroke="#2498b0" stroke-width="1"/>
-          <line x1="306" y1="109" x2="310" y2="109" stroke="#2498b0" stroke-width="1"/>
-          <line x1="308" y1="101" x2="308" y2="97" stroke="#2498b0" stroke-width="1.5"/>
-          <path d="M305.5,101 Q308,98 310.5,101" fill="none" stroke="#2498b0" stroke-width="1" opacity=".75"/>
-          <path d="M303.5,103 Q308,98 312.5,103" fill="none" stroke="#2498b0" stroke-width=".8" opacity=".4"/>
-          <text x="308" y="128" text-anchor="middle" fill="#2498b0" font-family="IBM Plex Mono" font-size="7.5" letter-spacing="1">COMMS HUB</text>
+          <line x1="325" y1="120" x2="329" y2="101" stroke="#2498b0" stroke-width="1"/>
+          <line x1="333" y1="120" x2="329" y2="101" stroke="#2498b0" stroke-width="1"/>
+          <line x1="325.8" y1="115" x2="332.2" y2="115" stroke="#2498b0" stroke-width="1"/>
+          <line x1="327" y1="109" x2="331" y2="109" stroke="#2498b0" stroke-width="1"/>
+          <line x1="329" y1="101" x2="329" y2="97" stroke="#2498b0" stroke-width="1.5"/>
+          <path d="M326.5,101 Q329,98 331.5,101" fill="none" stroke="#2498b0" stroke-width="1" opacity=".75"/>
+          <path d="M324.5,103 Q329,98 333.5,103" fill="none" stroke="#2498b0" stroke-width=".8" opacity=".4"/>
+          <text x="329" y="128" text-anchor="middle" fill="#2498b0" font-family="IBM Plex Mono" font-size="7.5" letter-spacing="1">COMMS HUB</text>
         </g>
+        <!-- DOCKS — Docklands -->
         <g opacity=".7">
-          <rect x="150" y="355" width="24" height="14" fill="rgba(72,152,56,.12)" stroke="#489838" stroke-width="1.4"/>
-          <text x="162" y="379" text-anchor="middle" fill="#489838" font-family="IBM Plex Mono" font-size="7.5">DOCKS</text>
+          <rect x="150" y="352" width="24" height="14" fill="rgba(72,152,56,.12)" stroke="#489838" stroke-width="1.4"/>
+          <text x="162" y="376" text-anchor="middle" fill="#489838" font-family="IBM Plex Mono" font-size="7.5">DOCKS</text>
         </g>
+        <!-- HOSPITAL — Med Row -->
         <g opacity=".7">
-          <rect x="617" y="218" width="14" height="14" fill="rgba(208,72,40,.08)" stroke="#d04828" stroke-width="1.5"/>
-          <rect x="619" y="223.5" width="10" height="3" fill="#d04828"/>
-          <rect x="622.5" y="219.5" width="3" height="10" fill="#d04828"/>
-          <text x="624" y="244" text-anchor="middle" fill="#d04828" font-family="IBM Plex Mono" font-size="7.5">HOSPITAL</text>
+          <rect x="668" y="213" width="14" height="14" fill="rgba(208,72,40,.08)" stroke="#d04828" stroke-width="1.5"/>
+          <rect x="670" y="218.5" width="10" height="3" fill="#d04828"/>
+          <rect x="673.5" y="214.5" width="3" height="10" fill="#d04828"/>
+          <text x="675" y="240" text-anchor="middle" fill="#d04828" font-family="IBM Plex Mono" font-size="7.5">HOSPITAL</text>
         </g>
+        <!-- AIRPORT — Interchange -->
         <g opacity=".7">
-          <!-- Top-down airplane: fuselage, swept wings, tail fins -->
-          <ellipse cx="37" cy="100" rx="1.8" ry="11" fill="#2860c8"/>
-          <polygon points="37,97 26,105 29,106 37,101 45,106 48,105" fill="#2860c8"/>
-          <polygon points="37,107 33,113 34.5,113 37,110 39.5,113 41,113" fill="#2860c8"/>
-          <text x="37" y="122" text-anchor="middle" fill="#2860c8" font-family="IBM Plex Mono" font-size="7" letter-spacing="0.5">AIRPORT</text>
+          <ellipse cx="68" cy="75" rx="1.4" ry="8.8" fill="#2860c8"/>
+          <polygon points="68,72.6 59.2,78 61.6,78.8 68,74.6 76.4,78.8 79.8,78" fill="#2860c8"/>
+          <polygon points="68,79.4 64.2,84.2 65.4,84.2 68,81.8 70.6,84.2 72.2,84.2" fill="#2860c8"/>
+          <text x="68" y="92" text-anchor="middle" fill="#2860c8" font-family="IBM Plex Mono" font-size="6.5" letter-spacing="0.5">AIRPORT</text>
         </g>
         <g id="pins-layer"></g>
         <g id="units-layer"></g>
-        <!-- Dispatch HQ marker -->
+        <!-- Dispatch HQ marker — Civic Core -->
         <g id="hq-marker" opacity=".7">
-          <rect x="341" y="156" width="18" height="18" fill="#0c1420" stroke="#e09818" stroke-width="1.5"/>
-          <text x="350" y="169" text-anchor="middle" font-family="Oswald,sans-serif" font-size="9" fill="#e09818" font-weight="600">HQ</text>
+          <rect x="319" y="152" width="18" height="18" fill="#0c1420" stroke="#e09818" stroke-width="1.5"/>
+          <text x="328" y="165" text-anchor="middle" font-family="Oswald,sans-serif" font-size="9" fill="#e09818" font-weight="600">HQ</text>
         </g>
       </svg>
     </div>
@@ -1146,7 +1147,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 <div class="modal-overlay" id="hq-evac-modal" style="background:rgba(3,5,10,.97);align-items:center;justify-content:center;">
   <div class="hq-evac-panel">
     <div class="hq-evac-img-wrap">
-      <img src="../Cutscene Graphics/Civic Core Collapse.png" style="width:100%;height:auto;display:block;">
+      <img src="Cutscene Graphics/Civic Core Collapse.png" style="width:100%;height:auto;display:block;">
     </div>
     <div class="hq-evac-body">
       <div class="hq-evac-text" id="hq-evac-text"></div>
@@ -1207,10 +1208,10 @@ const GM_PER_REAL_SEC = 480 / 720; // 720 real-secs = 12 min
 
 // ── DISTRICT CENTRES ──────────────────────────────────
 const DC = {
-  "Civic Core":{x:350,y:142},"Oldstone":{x:210,y:148},"Harborline":{x:350,y:258},
-  "Docklands":{x:215,y:342},"Foundry Ward":{x:490,y:148},"Southpoint":{x:505,y:272},
-  "Riverside":{x:80,y:268},"Ivy District":{x:630,y:143},"Med Row":{x:630,y:258},
-  "Interchange":{x:80,y:133}
+  "Civic Core":{x:370,y:128},"Oldstone":{x:217,y:113},"Harborline":{x:386,y:279},
+  "Docklands":{x:252,y:339},"Foundry Ward":{x:535,y:102},"Southpoint":{x:509,y:261},
+  "Riverside":{x:88,y:262},"Ivy District":{x:643,y:142},"Med Row":{x:678,y:266},
+  "Interchange":{x:58,y:121},"Factory Hill":{x:235,y:224},"Mill Quarter":{x:548,y:198}
 };
 
 // ── PENDING TIMEOUT CONFIG ────────────────────────────
@@ -3427,15 +3428,17 @@ const HQ_DEFEND_TEMPLATES = [
 // ── DISTRICT ADJACENCY MAP ─────────────────────────────
 // Used for Night 6+ cleanse targeting — only adjacent districts are reachable
 const DISTRICT_ADJACENCY = {
-  "Oldstone":          ["Civic Core","Riverside","Harborline"],
-  "Foundry Ward":      ["Civic Core","Ivy District","Harborline","Southpoint"],
-  "Harborline":        ["Civic Core","Oldstone","Foundry Ward","Docklands","Southpoint"],
-  "Civic Core":        ["Oldstone","Foundry Ward","Harborline"],
-  "Docklands":         ["Oldstone","Harborline","Riverside"],
-  "Southpoint":        ["Foundry Ward","Harborline","Med Row"],
-  "Riverside":         ["Interchange","Oldstone","Docklands"],
-  "Ivy District":      ["Foundry Ward","Med Row"],
-  "Med Row":           ["Ivy District","Southpoint"],
+  "Oldstone":          ["Civic Core","Riverside","Harborline","Factory Hill"],
+  "Foundry Ward":      ["Civic Core","Ivy District","Harborline","Mill Quarter"],
+  "Harborline":        ["Civic Core","Oldstone","Foundry Ward","Factory Hill","Mill Quarter","Southpoint"],
+  "Civic Core":        ["Oldstone","Foundry Ward","Harborline","Factory Hill"],
+  "Factory Hill":       ["Oldstone","Docklands","Riverside","Harborline","Civic Core"],
+  "Docklands":         ["Oldstone","Factory Hill","Harborline","Riverside"],
+  "Southpoint":        ["Foundry Ward","Mill Quarter","Harborline","Med Row"],
+  "Riverside":         ["Interchange","Oldstone","Factory Hill","Docklands"],
+  "Ivy District":      ["Foundry Ward","Med Row","Mill Quarter"],
+  "Mill Quarter":      ["Foundry Ward","Harborline","Southpoint","Ivy District","Med Row"],
+  "Med Row":           ["Ivy District","Southpoint","Mill Quarter"],
   "Interchange":       ["Riverside"]
 };
 
@@ -5789,7 +5792,7 @@ function showFired() {
   // Night 2+: use the zombie breach image instead of the early-game fired screen
   if(G.night >= 2) {
     const firedImg = document.getElementById("fired-img");
-    if(firedImg) firedImg.src = "../Cutscene Graphics/Fail Night 3+.png";
+    if(firedImg) firedImg.src = "Cutscene Graphics/Fail Night 3+.png";
   }
   document.getElementById("fired-screen").classList.add("active");
 }
@@ -5809,7 +5812,7 @@ function triggerN6GameOver(reason) {
         : "Night 5 ended with no cleanse completed. The plan dies here. Crown Harbor falls.";
       document.getElementById("fired-sub").textContent = sub;
       const firedImg = document.getElementById("fired-img");
-      if(firedImg) firedImg.src = "../Cutscene Graphics/Fail Night 3+.png";
+      if(firedImg) firedImg.src = "Cutscene Graphics/Fail Night 3+.png";
       document.getElementById("game-screen").classList.remove("active");
       document.getElementById("debrief-modal").classList.remove("open");
       document.getElementById("fired-screen").classList.add("active");
@@ -6196,7 +6199,8 @@ function updateDistrictVisuals(){
   // Progressive gradient: 0=default, 1=amber tint, 2=red tint, 3+=deep red pulse
   const districts = [
     "Civic Core","Oldstone","Harborline","Docklands","Foundry Ward",
-    "Southpoint","Riverside","Ivy District","Med Row","Interchange"
+    "Southpoint","Riverside","Ivy District","Med Row","Interchange",
+    "Factory Hill","Mill Quarter"
   ];
   districts.forEach(d=>{
     const dKey = "dg-"+d.replace(/ /g,"");
@@ -7615,28 +7619,28 @@ const CUTSCENE_DATA = {
   },
   // Night 3 \u2192 4: City unravels \u2014 burning docks, isolation, political vacuum
   3: {
-    img: "../Cutscene Graphics/Cutscene Night 4-5b.png",
+    img: "Cutscene Graphics/Cutscene Night 4-5b.png",
     tag: "CROWN HARBOR \u2014 EMERGENCY BROADCAST \u2014 DAY 4 \u2014 06:22",
     headline: "The City Is On Its Own Now",
     body: "Last night Crown Harbor unraveled, district by district, and the only thing keeping what\u2019s left of it standing is the people who didn\u2019t run.\n\nWhatever is moving through the streets \u2014 and no one\u2019s ready to say the \u201cZ\u201d word yet \u2014 it\u2019s contained to Crown Harbor. Small mercy. Unfortunately for us, the Governor wants to keep it that way and ordered all routes in and out restricted. The docks, the airport, the ring roads \u2014 sealed or lost. We\u2019re on our own.\n\nThe Mayor and most of the city\u2019s elected leadership were at Crown Harbor General visiting the previous night\u2019s victims when Med Row fell. The city is now being run by what\u2019s left of the Police and other essential services, including emergency management. Looks like you just got a promotion.\n\nThat also means there is still a city to be run and that is something. That is hope. Get some food, get some sleep and get ready to go again \u2014 this is far from over."
   },
   // Night 4 \u2192 5: HQ relocated, airdrop, outline of a plan
   4: {
-    img: "../Cutscene Graphics/Cutscene Night 5-6.png",
+    img: "Cutscene Graphics/Cutscene Night 5-6.png",
     tag: "CROWN HARBOR \u2014 SHORTWAVE \u2014 DAY 5 \u2014 05:51",
     headline: "Aftermath",
     body: "Crown Harbor is smaller this morning. Not just in size \u2014 but in what\u2019s possible. Civic Core is gone. The main comms relay is silent \u2014 which means you\u2019re working half blind, and that\u2019s not changing anytime soon. By dawn, every unit had pulled back. There was no way to hold anything else, the tide was too strong. The rest of the city fell overnight, all of it\u2026except one district.\n\nBut there was a silver lining to last night. The new location we evac\u2019d to isn\u2019t as built up as Civic Core \u2014 which allowed for an airdrop at first light. Turns out the Governor has a heart after all. Food, ammo, medical supplies and buried in another container \u2014 the outline of a plan to save the city. It\u2019s bold. It\u2019s probably suicidal. But it\u2019s something. We need to either retake the airport to allow bringing research teams in and out to find a solution, or we retake Med Row and its labs to do it locally. Oh \u2014 and either way, we need the comms hub back. Would\u2019ve been nice to know that last night. Also\u2026how do we retake districts? Oh wait\u2026is that another parachute coming down?"
   },
   // Night 5 \u2192 6: units get better equipment, more drops inbound
   5: {
-    img: "../Cutscene Graphics/Cutscene Night 6-7.png",
+    img: "Cutscene Graphics/Cutscene Night 6-7.png",
     tag: "CROWN HARBOR \u2014 SHORTWAVE \u2014 DAY 6 \u2014 06:14",
     headline: "Better Armed than Sorry",
     body: "Last night was hairy, but it\u2019s the first time it has felt like we won. The Governor\u2019s plan might have a shot after all.\n\nThe Suppressor was like out of legend, not just his enhanced gear, but his knowledge and nerve...I don\u2019t even want to ask where or how this guy earned his stripes. That said, our teams are learning from him quickly. Even more importantly, at dawn another air drop brought in more advanced gear. While, unfortunately, we didn\u2019t get another one man army, a couple instructors and techs parachuted in to help our teams make the best use of the new gear. Some of our cops knew one of the instructors and have taken an early shine to the new kit. That\u2019s a good sign and melted any hesitation our other teams had of taking a look.\n\nWe don\u2019t know if the city can be saved. But we do know it is now officially twice as big as it was yesterday. Wait...did I just hear someone quote RoboCop? What exactly was in those crates...they can be such children som..."
   },
   // Night 6 \u2192 7: research teams operational, specimen phase begins
   6: {
-    img: "../Cutscene Graphics/Cutscene Night 7-8.png",
+    img: "Cutscene Graphics/Cutscene Night 7-8.png",
     tag: "CROWN HARBOR \u2014 SHORTWAVE \u2014 DAY 7 \u2014 06:31",
     headline: "Momentum",
     body: "Two districts reclaimed in two nights and stage one of the plan complete. There is now real hope starting to grow of saving the city.\n\nThe research teams are up and running. They moved fast \u2014 assessed the situation, got organized, and had questions by 0530. Good questions....almost too good. They were the kind of questions that suggest they\u2019ve been thinking about this longer than we have. What they need now are specimens. Live if possible. Dead if not. Somewhere in between if that\u2019s what\u2019s available \u2014 and they were ominously specific about that last part. Best not to think about it.\n\nBack on the headset at 22:00."
@@ -7931,7 +7935,7 @@ function showOpBriefing(nextNight) {
   document.getElementById("opbrief-evo-chart").innerHTML = `<div style="position:relative;">
     <div style="display:flex;">
       <div style="width:46px;flex-shrink:0;"></div>
-      <img src="../Cutscene Graphics/Class Evolutions.png" style="flex:1;min-width:0;display:block;width:100%;border:1px solid var(--border2);">
+      <img src="Cutscene Graphics/Class Evolutions.png" style="flex:1;min-width:0;display:block;width:100%;border:1px solid var(--border2);">
       <div style="width:218px;flex-shrink:0;"></div>
     </div>
     <div style="position:absolute;top:0;left:0;right:0;bottom:0;transform:translateY(${overlayShift}px);pointer-events:none;">
@@ -8467,6 +8471,8 @@ const DISTRICT_DESCS = {
   "Ivy District":  "University area. High foot traffic, low serious crime. Mostly medical and noise complaints.",
   "Med Row":       "Crown Harbor's medical corridor. The city's main hospital, a top-tier medical school, and a cluster of pharmaceutical research labs anchor the district. Heavy venture capital presence. This is the city's tax base and its future — calls here get attention from people you don't want calling you.",
   "Interchange":   "Highway access points and transit infrastructure. Accidents and infrastructure failures.",
+  "Factory Hill":   "Former light industrial corridor turned halfway to residential. Half the buildings are converted lofts, half are still running machinery. No one fully knows who's responsible for what.",
+  "Mill Quarter":  "Transitional zone between Foundry Ward's industrial past and Southpoint's residential density. Mixed zoning, deferred development, and the kind of vacancy rates that attract problems.",
   "Highway Ring":  "Ring road connecting outer districts. Accident-prone. Limited patrol coverage.",
 };
 
@@ -8802,7 +8808,7 @@ function devPreviewBriefing(night){
     unitXP: {Fire1:4, Fire3:0, Pol1:0, Pol2:7, EMS1:5, PW1:3},
     evolvedPolice: true, evolvedPoliceUnit: "Pol1",
     giftedMarshal: false,
-    lostDistricts: new Set(["Interchange","Med Row","Docklands","Southpoint","Riverside","Foundry Ward","Civic Core"]),
+    lostDistricts: new Set(["Interchange","Med Row","Docklands","Southpoint","Riverside","Foundry Ward","Civic Core","Factory Hill","Mill Quarter"]),
     choiceData: [{l:"Evolve Police Unit — Fortify Protocol"}],
     _usedQuips: new Set(),
     buffs: {}
@@ -8828,8 +8834,8 @@ function devLaunch(){
   // Build CARRY state for the target night
   // Pre-populate lostDistricts based on scripted losses by night
   const devLostByNight = {
-    4: new Set(["Med Row","Docklands","Interchange"]),
-    5: new Set(["Med Row","Docklands","Interchange"]),
+    4: new Set(["Med Row","Docklands","Interchange","Factory Hill","Mill Quarter"]),
+    5: new Set(["Med Row","Docklands","Interchange","Factory Hill","Mill Quarter"]),
   };
   let devLostDistricts;
   const allDistricts = ["Oldstone","Foundry Ward","Harborline","Civic Core","Docklands",
@@ -9675,7 +9681,7 @@ const CTX_TUTS = {
     title:"Interchange — Airport Secured",
     body:"Last infected went quiet twenty minutes ago. The Suppressors worked the final blocks as other units pushed through to the terminal. Someone hoisted a flag over the control tower — the district is clear.\n\nInterchange and, more importantly, the airport are now ours. That was step one. We now have a link to the outside — research teams to figure out what's actually going on will be inbound shortly, along with a steady stream of advanced gear. This will mean new capabilities for the team, faster than training and airdrops alone.\n\n<b>This is the first good news Crown Harbor has had since this began. Now — step two.</b>",
     target:"map-panel", place:"right",
-    img:"../Cutscene Graphics/Interchange Liberation 2.png"
+    img:"Cutscene Graphics/Interchange Liberation 2.png"
   },
   specialist_intro: {
     title:"Specialist — Collection Operations",
@@ -9686,7 +9692,7 @@ const CTX_TUTS = {
     title:"Med Row — Reclaimed",
     body:"The room-by-room fighting was brutal, but the hospital is back in our hands. The labs too — the ones that are left, anyway.\n\nDespite the widespread damage, the lab complexes listed as critical are intact — all of them. And as if that wasn't enough — mop-up teams clearing these facilities found most of the research staff had survived by shutting themselves in storage vaults, hermetic chambers, and even a broom closet.\n\nWe don't know what caused this yet — but with what we secured today, the path to saving this city just got a lot shorter.\n\n<b>This was a good day...ok, celebration over. Now, step two.</b>",
     target:"map-panel", place:"right",
-    img:"../Cutscene Graphics/MedRow Liberation 2.png"
+    img:"Cutscene Graphics/MedRow Liberation 2.png"
   },
 };
 
