@@ -113,8 +113,9 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .queue-list{flex:1;overflow-x:auto;overflow-y:hidden;padding:5px 6px;display:flex;flex-direction:row;gap:6px;align-items:stretch;}
 .queue-list::-webkit-scrollbar{height:3px;}
 .queue-list::-webkit-scrollbar-thumb{background:var(--border2);}
-.queue-item{flex:0 0 auto;width:200px;padding:6px 8px;background:var(--panel);border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all .15s;}
+.queue-item{flex:0 0 auto;width:200px;padding:6px 8px;background:var(--panel);border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:background .15s,opacity .15s;}
 .queue-item:hover{border-color:var(--amber);background:var(--panel2);}
+.queue-item.qi-urgent:hover,.queue-item.qi-dark:hover,.queue-item.qi-staged:hover,.queue-item.limbo-state:hover{animation:none;}
 .queue-item.limbo-state{border-color:var(--limbo);animation:lborder 1.4s infinite;}
 .queue-item.qi-dark{border-color:#c83838!important;animation:lborder 1s infinite;}
 .queue-item.qi-staged{border-color:var(--amber)!important;animation:lborder 1.6s infinite;}
@@ -5156,7 +5157,7 @@ function tick(){
     if(Math.random()<i.limboChance*(dt/4)) trigLimbo(i);
   });
 
-  topBar(); limboUI(); renderQueue();
+  topBar(); limboUI(); updateQueueTimerBars();
 
   // ── NIGHT 4 SCRIPTED TRIGGERS ──────────────────────────
   // Minute 120 = 00:00 midnight — HQ evacuation order
@@ -8523,6 +8524,25 @@ function renderQueue(){
     : "0 active";
   document.getElementById("queue-count").textContent = qLabel;
   updateStagedBanner();
+}
+
+function updateQueueTimerBars(){
+  const container = document.getElementById("queue-list");
+  if(!container || !G || !G.incidents) return;
+  G.incidents.filter(i=>i.status==="Pending"&&i.pendingWindow).forEach(i=>{
+    const tb = container.querySelector('[data-timer-id="'+i.id+'"]');
+    if(!tb) return;
+    const pct = Math.min(1,(G.minute-i.occurMin)/i.pendingWindow);
+    const barPct = Math.round(pct*100);
+    const barCol = pct>=CRIT_THRESHOLD?"var(--red)":pct>=WARN_THRESHOLD?"var(--amber)":"var(--green)";
+    const label = pct>=CRIT_THRESHOLD?"RESPONSE NEEDED":pct>=WARN_THRESHOLD?"WAITING":"PENDING";
+    const lbl=tb.querySelector("[data-tb-label]");
+    const pctEl=tb.querySelector("[data-tb-pct]");
+    const fill=tb.querySelector("[data-tb-fill]");
+    if(lbl){lbl.textContent=label;lbl.style.color=barCol;}
+    if(pctEl){pctEl.textContent=barPct+"%";pctEl.style.color=barCol;}
+    if(fill){fill.style.width=barPct+"%";fill.style.background=barCol;}
+  });
 }
 
 
