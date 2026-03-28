@@ -5979,7 +5979,7 @@ function resolve(i){
   let trustReason = "";
   if(failed) {
     const cause = i.failCause || "rng";
-    if(cause === "wrongUnit" || cause === "stagedPush") {
+    if(cause === "stagedPush") {
       trustDelta = -2; trustReason = "Poor dispatch decision";
     } else if(cause === "partialResponse") {
       trustDelta = -1; trustReason = "Incomplete response";
