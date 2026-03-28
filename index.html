@@ -8014,14 +8014,14 @@ function showTeaser(){
 
   // Summary text
   const summaries = {
-    1: G.spread===0&&G.legit>=9
+    1: G.legit>=11
       ? "Quiet one. Calls came in, units responded, city kept moving. Pretty sweet gig if it's always like this."
-      : G.spread<=2
+      : G.legit>=8
       ? "Manageable. A few calls ran long, but you held it together. Not a bad start — you're getting the hang of it."
       : "Rough start — coverage slipped on a few calls. Happens to everyone once. Better get the workflow down if you want this job to last.",
-    2: G.spread<=2&&G.legit>=8
+    2: G.legit>=9
       ? "You held it together — but the night felt wrong. Too many calls with no clean explanation. The radio static, the bite reports, the behavior calls. It doesn't make sense. None of it does."
-      : G.spread<=4
+      : G.legit>=6
       ? "The board barely held. More angry people out there tonight than this city has any reason for. Something isn't right — and you can feel it even if you can't name it."
       : "Coverage broke down — you have to do better. The calls that got through were strange enough to stay with you. A lot of anger out there tonight, and none of it felt random.",
     3: G.legit>=8
