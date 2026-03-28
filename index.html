@@ -7458,12 +7458,13 @@ function applyExtraUnitFromCarry(){
   if(!CARRY.buffs || !CARRY.buffs.extraUnit) return;
   const eu = CARRY.buffs.extraUnit;
   const typeMap = {EMS:"EMS",Fire:"Fire",Police:"Police",PublicWorks:"PublicWorks"};
+  const nameMap = {EMS:"Paramedic",Fire:"Firefighter",Police:"Officer",PublicWorks:"Utility Worker"};
   const t = typeMap[eu.type] || "EMS";
   // Generate a unique ID
   const existing = G.units.filter(u=>u.type===t).length;
   const newId = t.substring(0,3)+(existing+1);
   G.units.push({
-    id:newId, type:t, name:newId, status:"Available", posture:"Cautious",
+    id:newId, type:t, name:nameMap[t]||newId, status:"Available", posture:"Cautious",
     readiness: eu.rookie ? "Yellow" : "Green",
     condition:"Green", fatigue: eu.rookie ? 20 : 30, assignedTo:null, callCount:0
   });
