@@ -4899,7 +4899,7 @@ function newGame() {
     if(!confirm("Start a new shift? Your Night "+save.night+" save will be lost.")) return;
     clearSave();
   }
-  CARRY = { legit:10, shiftChoices:[], choiceData:[], commsDegraded:false, unitLost:null, spreadHistory:[], legitHistory:[], tut_seen:new Set(), lostDistricts:new Set(), hqDistrict:"Civic Core" };
+  CARRY = { legit:12, shiftChoices:[], choiceData:[], commsDegraded:false, unitLost:null, spreadHistory:[], legitHistory:[], tut_seen:new Set(), lostDistricts:new Set(), hqDistrict:"Civic Core" };
   enterGame(1);
 }
 
