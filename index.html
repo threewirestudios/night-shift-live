@@ -5853,8 +5853,9 @@ function triggerN6GameOver(reason) {
   }, 800);
 }
 
-function exitLimbo(i){
-  i.status="OnScene"; i.timerMs=rng(i.onSceneSec[0],i.onSceneSec[1])*600;
+function exitLimbo(i, timeMult){
+  const _tm = timeMult !== undefined ? timeMult : 0.6;
+  i.status="OnScene"; i.timerMs=rng(i.onSceneSec[0],i.onSceneSec[1])*(_tm*1000);
   // Restore unit statuses
   i.assignedUnits.forEach(uid=>{ const u=G.units.find(x=>x.id===uid); if(u) u.status="OnScene"; });
   const u=i.assignedUnits[0]||"Unit";
@@ -6857,7 +6858,11 @@ function doStagedCall(choice) {
       ? u + " is moving in. You'll hear a scene update shortly."
       : u + " is holding. They'll advise when ready to proceed.";
 
-  setTimeout(()=>{ if(i.status==="Limbo") exitLimbo(i); }, 1800);
+  if(choice === "push") {
+    setTimeout(()=>{ if(i.status==="Limbo") exitLimbo(i, 0.35); }, 800);
+  } else {
+    setTimeout(()=>{ if(i.status==="Limbo") exitLimbo(i, 0.9); }, 1800);
+  }
   setTimeout(closeModal, 1600);
 }
 
