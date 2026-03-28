@@ -5492,6 +5492,10 @@ function dispatch(i,units,posture,tRisk){
   i.onSceneMs=rng(i.onSceneSec[0],i.onSceneSec[1])*pm.timeMult*1000;
   i.timerMs=rng(i.travelSec[0],i.travelSec[1])*pm.timeMult*1000;
   i.status="Traveling";
+  // Smart-triage recall: if a recall context is active and this dispatch goes to a higher-SEV incident, waive the recall penalty
+  if(G._recallCtx && Date.now() < G._recallCtx.expires && i.severity > G._recallCtx.sev) {
+    G._recallCtx = null;
+  }
   units.forEach(uid=>{ const u=G.units.find(u=>u.id===uid); if(u){u.status="Traveling";u.assignedTo=i.id;u.posture=posture;u.callCount=(u.callCount||0)+1;} });
   const isStrategicOp = i.isFortifyMission || i.isCleanseMission || i.isCollectionMission;
   if(!isStrategicOp) { G.threadsUsed++; i.threadSlots = (i.threadSlots||0) + 1; }
@@ -5725,7 +5729,7 @@ function trigLimbo(i){
           // Outcome bakes into existing fail chance (no modifier — they acted without guidance)
         } else {
           // Crew pulled back — counts as abandon, trust hit applies when they report back
-          const trustHit = i.severity >= 3 ? -2 : -1;
+          const trustHit = -1; // flat: mirrors normal fail regardless of SEV
           comm("unit", u+": ...Dispatch. We pulled back. Couldn't raise you and it didn't feel right going in blind.");
           setTimeout(()=>{
             comm("unit", u+": On our way back. Sorry. We didn't know what to do.");
@@ -6810,7 +6814,8 @@ function doStagedCall(choice) {
         G.debriefFlags.push({title:i.title, district:i.district, reason: i.isCleanseMission ? "Cleanse operation aborted. Player ordered Suppressor to fall back." : i.isFortifyMission ? "Fortify stood down by player order." : i.isCollectionMission ? "Collection withdrawn by player order. District cannot be re-sampled." : "Player ordered retreat. Units pulled back before position failed."});
         const fx = i.failFx||{};
         if(G.night > 1) G.spread = Math.max(0, G.spread+(fx.spread||0));
-        G.legit = Math.max(0, G.legit+(fx.legit||0));
+        const withdrawDelta = i.severity >= 3 ? -1 : -0.5;
+        G.legit = Math.max(0, G.legit + withdrawDelta);
         if((fx.vol||0)>0){ G.distVol[i.district]=(G.distVol[i.district]||0)+1; markVol(i.district); }
         if(i.isMedRowLockdown) markDistrictLost("Med Row");
         if(i.isInterchangeLoss) markDistrictLost("Interchange");
@@ -6900,29 +6905,27 @@ function recallUnit(incId){
   }
   if(i.status!=="Traveling") return;
   const u = i.assignedUnits[0]||"Unit";
-  const hasPendingHigher = G.incidents.some(x=>x.status==="Pending" && x.severity>i.severity);
-  let penalty = 0;
-  let penaltyNote = "";
-  if(hasPendingHigher){
-    penaltyNote = "Smart triage — recalled lower-priority unit for higher-severity call.";
-  } else if(i.severity===1){
-    penalty = 0;
-    penaltyNote = "Sev-1 abandoned — no trust impact.";
-  } else if(i.severity===2){
-    penalty = -1;
-    penaltyNote = "Sev-2 abandoned — partial trust impact.";
+  const recalledSev = i.severity;
+  const channelsFull = G.threadsUsed >= G.threadsMax;
+  const declineDelta = recalledSev >= 3 ? -1 : -0.5;
+
+  if (channelsFull) {
+    // Smart triage: channels were full — 20s real-time window to dispatch to a higher-SEV incident
+    G._recallCtx = { sev: recalledSev, expires: Date.now() + 20000 };
+    setTimeout(() => {
+      if (G._recallCtx) {
+        G.legit = Math.max(0, G.legit + declineDelta);
+        G._recallCtx = null;
+        if(G.legit <= 0){ endShift(); }
+        notif(u + " — no higher-SEV replacement dispatched", "red");
+      }
+    }, 20000);
   } else {
-    penalty = -2;
-    penaltyNote = "Sev-3 abandoned — serious trust impact.";
+    // Channels not full — no triage justification, apply penalty immediately
+    G.legit = Math.max(0, G.legit + declineDelta);
+    if(G.legit <= 0){ endShift(); return; }
   }
-  // Apply trust change
-  if(penalty !== 0){
-    G.legit = Math.max(0, Math.min(15, G.legit + penalty));
-    notif("Unit recalled — trust "+(penalty<0?penalty:"")+(penalty>0?"+"+penalty:""),"red");
-    if(G.legit<=0){ endShift(); return; }
-  } else {
-    notif(u+" recalled — returning to station","");
-  }
+  notif(u+" recalled — returning to station","");
   comm("dispatch","Dispatch: "+u+" — abort response. Return to station.");
   setTimeout(()=>comm("unit",u+": Copy. Aborting — returning to station."),1200);
   // Free the unit and thread
@@ -6934,8 +6937,8 @@ function recallUnit(incId){
   removeUnitMarkers(incId);
   G.incidents = G.incidents.filter(x=>x.id!==incId);
   G.failedCt++;
-  if(penaltyNote) G.debriefFlags = G.debriefFlags||[];
-  if(penalty<0) G.debriefFlags.push({title:i.title+" — Recalled En Route",district:i.district,reason:penaltyNote});
+  G.debriefFlags = G.debriefFlags||[];
+  G.debriefFlags.push({title:i.title+" — Recalled En Route",district:i.district,reason:"Unit recalled mid-transit."});
   renderUnits(); renderQueue(); topBar();
 }
 
@@ -8352,7 +8355,8 @@ function _docklandsClose(i, success, outcome) {
     G.resolvedCt++;
   } else {
     G.failedCt++;
-    G.legit = Math.max(0, G.legit - 1);
+    // Scripted narrative outcome — no trust penalty; losing Docklands is consequence enough
+    // Convention: narrative-driven unavoidable outcomes carry no trust delta (use noTrustPenalty:true on templates)
   }
 
   renderUnits(); renderQueue(); topBar();
