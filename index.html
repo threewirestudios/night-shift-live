@@ -7016,7 +7016,6 @@ function doDefer(){
   i.failChance = Math.min(0.85, (i.failChance||i.failBaseChance||0.1) + 0.12);
   i.limboChance = Math.min(0.85, (i.limboChance||i.limboBaseChance||0.15) + 0.08);
   comm("dispatch","Dispatch: "+i.title+" — acknowledged, unable to respond immediately. Monitoring.");
-  comm("system","Pending window extended — failure risk elevated.");
   closeModal();
 }
 
