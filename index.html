@@ -70,9 +70,9 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .district-shape:hover{cursor:pointer;}
 .district-label{font-family:'Oswald',sans-serif;font-size:10px;fill:rgba(192,204,218,.48);pointer-events:none;text-transform:uppercase;letter-spacing:1px;}
 .incident-pin{cursor:pointer;pointer-events:bounding-box;}
-.pin-ring{animation:ping 2.2s cubic-bezier(0,0,.2,1) infinite;}
+.pin-ring{opacity:0;} /* replaced by pin-countdown */
 @keyframes ping{0%{r:9;opacity:.8}70%{r:18;opacity:0}100%{r:18;opacity:0}}
-.incident-pin.responded .pin-ring{animation:none;opacity:.25;}
+.incident-pin.responded .pin-countdown{opacity:.55;}
 .comm-line.comm-linked{background:rgba(80,140,255,.12);border-left:2px solid #4a8cff;margin-left:-2px;transition:background .2s;}
 .incident-pin.responded{pointer-events:bounding-box;}
 #pin-tooltip{position:fixed;pointer-events:none;background:rgba(4,10,20,.94);border:1px solid var(--border2);padding:5px 10px;font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text);line-height:1.65;z-index:200;display:none;white-space:nowrap;}
@@ -522,7 +522,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.93</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.94</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -5186,7 +5186,7 @@ function tick(){
     if(Math.random()<i.limboChance*(dt/4)) trigLimbo(i);
   });
 
-  topBar(); limboUI(); updateQueueTimerBars();
+  topBar(); limboUI(); updateQueueTimerBars(); updatePinTimers();
 
   // ── NIGHT 4 SCRIPTED TRIGGERS ──────────────────────────
   // Minute 120 = 00:00 midnight — HQ evacuation order
@@ -5522,6 +5522,7 @@ function dispatch(i,units,posture,tRisk){
   i.posture=posture; i.assignedUnits=units;
   i.onSceneMs=rng(i.onSceneSec[0],i.onSceneSec[1])*pm.timeMult*1000;
   i.timerMs=rng(i.travelSec[0],i.travelSec[1])*pm.timeMult*1000;
+  i._travelMs=i.timerMs; // total travel time for pin countdown ring
   i.status="Traveling";
   // Smart-triage recall: if a recall context is active and this dispatch goes to a higher-SEV incident, waive the recall penalty
   if(G._recallCtx && Date.now() < G._recallCtx.expires && i.severity > G._recallCtx.sev) {
@@ -5728,6 +5729,7 @@ function trigLimbo(i){
   i.status="Limbo"; G.limboCt++;
   const ls = i.limboSec || [30,70];
   i.limboMs=rng(ls[0],ls[1])*1000;
+  i._limboTotalMs=i.limboMs; // total staged window for pin countdown ring
   i.limboType=limboType;
   // Sync unit status so unit cards show DARK/STAGED correctly
   i.assignedUnits.forEach(uid=>{ const u=G.units.find(x=>x.id===uid); if(u) u.status="Limbo"; });
@@ -9597,9 +9599,37 @@ const FCOL={
   Infrastructure:"#489838" // PW green    --pw
 };
 
+function updatePinTimers(){
+  if(!G.incidents) return;
+  G.incidents.forEach(i=>{
+    const pinG = document.getElementById("pin-"+i.id);
+    if(!pinG) return;
+    const ring = pinG.querySelector(".pin-countdown");
+    if(!ring) return;
+    let pct = 0;
+    if(i.status==="Pending"){
+      if(i.pendingWindow >= 999){ pct = 0; } // scripted anchors: no countdown
+      else { pct = Math.min(1, (G.minute - i.occurMin) / i.pendingWindow); }
+    } else if(i.status==="Traveling" && i._travelMs){
+      pct = Math.min(1, 1 - i.timerMs / i._travelMs);
+    } else if(i.status==="OnScene" && i.onSceneMs){
+      pct = Math.min(1, 1 - i.timerMs / i.onSceneMs);
+    } else if(i.status==="Limbo" && i._darkRunning && i.onSceneMs){
+      pct = Math.min(1, 1 - i.timerMs / i.onSceneMs); // dark: same as onScene
+    } else if(i.status==="Limbo" && !i._darkRunning && i._limboTotalMs){
+      pct = Math.min(1, 1 - i.limboMs / i._limboTotalMs); // staged: limbo countdown
+    }
+    const col = pct >= 0.85 ? "#c83838" : pct >= 0.6 ? "#d07018" : "#22c55e";
+    const r = parseFloat(ring.getAttribute("r"));
+    const circ = 2 * Math.PI * r;
+    ring.setAttribute("stroke-dashoffset", (circ*(1-pct)).toFixed(2));
+    ring.setAttribute("stroke", col);
+  });
+}
+
 function setPinUrgency(incId, level) {
+  // Urgency color now handled by updatePinTimers countdown ring
   const g = document.getElementById("pin-"+incId); if(!g) return;
-  const ring = g.querySelector(".pin-ring");
   const fill = g.querySelectorAll("circle")[1];
   if(level==="warn") {
     if(ring){ ring.setAttribute("stroke","#e09818"); ring.style.animationDuration="1.4s"; }
@@ -9625,17 +9655,18 @@ function addPin(i){
   g.setAttribute("onmouseleave","hidePinTip()");
   const sev = i.severity || 1;
   const ringR = sev >= 3 ? 12 : sev >= 2 ? 10 : 8;
-  const ringW = sev >= 3 ? 2.5 : sev >= 2 ? 2 : 1.5;
-  const outerRing = sev >= 2 ? `<circle class="pin-ring" cx="${cx}" cy="${cy}" r="${ringR+4}" fill="none" stroke="${col}" stroke-width="1" opacity=".4"/>` : "";
-  // Family letter — first letter of family, more readable
+  const ringW = sev >= 3 ? 3.5 : sev >= 2 ? 3 : 2.5;
+  const circ = +(2 * Math.PI * ringR).toFixed(2);
   const famLetter = {Violence:"V",Medical:"M",FireHazard:"F",Infrastructure:"I"}[i.family]||"?";
   g.innerHTML=`
-    ${outerRing}
-    <circle class="pin-ring" cx="${cx}" cy="${cy}" r="${ringR}" fill="none" stroke="${col}" stroke-width="${ringW}"/>
-    <circle cx="${cx}" cy="${cy}" r="${ringR-1}" fill="${col}20" stroke="${col}" stroke-width="${ringW}"/>
-    <circle cx="${cx}" cy="${cy}" r="3.5" fill="${col}"/>
+    <circle cx="${cx}" cy="${cy}" r="${ringR}" fill="none" stroke="${col}" stroke-width="${ringW}" opacity=".2"/>
+    <circle class="pin-countdown" cx="${cx}" cy="${cy}" r="${ringR}" fill="none" stroke="#22c55e" stroke-width="${ringW}"
+      stroke-dasharray="${circ}" stroke-dashoffset="${circ}"
+      stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
+    <circle cx="${cx}" cy="${cy}" r="${ringR-2}" fill="${col}40" stroke="${col}" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="3" fill="${col}"/>
     <text x="${cx}" y="${cy-(ringR+4)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="${col}">${famLetter}</text>
-    <circle cx="${cx}" cy="${cy}" r="${ringR+8}" fill="transparent" stroke="none" style="pointer-events:all"/>`;
+    <circle cx="${cx}" cy="${cy}" r="${ringR+6}" fill="transparent" stroke="none" style="pointer-events:all"/>`;
   layer.appendChild(g);
 }
 
