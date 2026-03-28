@@ -9628,16 +9628,7 @@ function updatePinTimers(){
 }
 
 function setPinUrgency(incId, level) {
-  // Urgency color now handled by updatePinTimers countdown ring
-  const g = document.getElementById("pin-"+incId); if(!g) return;
-  const fill = g.querySelectorAll("circle")[1];
-  if(level==="warn") {
-    if(ring){ ring.setAttribute("stroke","#e09818"); ring.style.animationDuration="1.4s"; }
-    if(fill){ fill.setAttribute("stroke","#e09818"); }
-  } else if(level==="crit") {
-    if(ring){ ring.setAttribute("stroke","#c83838"); ring.style.animationDuration="0.65s"; }
-    if(fill){ fill.setAttribute("stroke","#c83838"); }
-  }
+  // Color handled by updatePinTimers — nothing to do
 }
 
 function addPin(i){
@@ -9655,7 +9646,7 @@ function addPin(i){
   g.setAttribute("onmouseleave","hidePinTip()");
   const sev = i.severity || 1;
   const ringR = sev >= 3 ? 12 : sev >= 2 ? 10 : 8;
-  const ringW = sev >= 3 ? 3.5 : sev >= 2 ? 3 : 2.5;
+  const ringW = sev >= 3 ? 1.75 : sev >= 2 ? 1.5 : 1.25;
   const circ = +(2 * Math.PI * ringR).toFixed(2);
   const famLetter = {Violence:"V",Medical:"M",FireHazard:"F",Infrastructure:"I"}[i.family]||"?";
   g.innerHTML=`
