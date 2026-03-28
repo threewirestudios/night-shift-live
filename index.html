@@ -1031,13 +1031,13 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
           <div class="situation-status" style="color:var(--amber)">⬡ {dispatchedUnit} — HOLDING AT ACCESS POINT</div>
           <div class="situation-desc">Your crew is at the access point and refusing to go further. They say something smells wrong and there's movement below the junction. Could be anything — gas pocket, animals, runoff from Foundry Ward. They want to come back up.</div>
           <div class="situation-opts" id="sewer-opts">
-            <button class="btn-situation" onclick="doSewerRecall()">
-              <strong>Recall the Crew</strong>
-              Bring them back. Log it as unusual conditions, flag it for the supervisor. Probably nothing.
-            </button>
             <button class="btn-situation" onclick="doSewerOverride()">
               <strong>Tell Them to Go Check It Out</strong>
               Look, it's probably just runoff. Go take a look, log what you find, and come back up. Sooner they go down, sooner everyone goes home.
+            </button>
+            <button class="btn-situation" onclick="doSewerRecall()">
+              <strong>Recall the Crew</strong>
+              Bring them back. Log it as unusual conditions, flag it for the supervisor. Probably nothing.
             </button>
           </div>
           <div class="sit-result" id="sewer-result"></div>
