@@ -194,6 +194,11 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 #comms-feed.filter-critical .comm-line:not(.system):not(.narrative):not(.alert){display:none;}
 #comms-feed.filter-dispatch .comm-line:not(.system):not(.narrative):not(.dispatch):not(.success){display:none;}
 #comms-feed.filter-field .comm-line:not(.system):not(.narrative):not(.unit):not(.caller){display:none;}
+.qi-defer{float:right;margin-top:3px;padding:2px 7px;background:transparent;border:1px solid var(--text3);color:var(--text3);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-defer:hover{background:rgba(140,160,140,.12);border-color:var(--text2);color:var(--text2);}
+.qi-qdecline{float:right;margin:3px 4px 0 0;padding:2px 7px;background:transparent;border:1px solid rgba(200,60,60,.5);color:rgba(200,60,60,.7);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-qdecline:hover{background:rgba(200,40,40,.12);border-color:var(--red);color:var(--red);}
+.qi-qdecline.qi-confirming{background:rgba(200,40,40,.18);border-color:var(--red);color:var(--red);}
 .qi-recall{float:right;margin-top:3px;padding:2px 8px;background:transparent;border:1px solid var(--amber);
   color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;border-radius:2px;
   letter-spacing:1px;}
@@ -510,7 +515,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.90</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.91</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -4813,7 +4818,7 @@ function initState(night){
     units: freshUnits, distVol:{},
     scheduledIncidents: scheduleNightIncidents(n),
     spawned:new Set(), debriefDone:false, shiftChoice:null,
-    debriefFlags:[], debriefChoices:[], _windDownFired:false,
+    debriefFlags:[], debriefChoices:[], _windDownFired:false, _quickDeclineConfirm: null,
     commsDegraded: CARRY.commsDegraded,
     spawndarkActive: CARRY.commsFullyDegraded || false,
     _spawnDarkCount: 0, _hqEvacFired: false, _commsHubFired: false,
@@ -5976,7 +5981,8 @@ function resolveFromDark(i){
       const iSuccFx = i.successFx||{};
       if(G.night > 1) G.spread = Math.max(0, G.spread+(iSuccFx.spread||0));
       const darkDelta = i.severity>=3?2:i.severity>=2?1:0.5;
-      G.legit = Math.min(15, Math.max(0, G.legit + darkDelta));
+      const adjDelta = i._deferred ? darkDelta * 0.75 : darkDelta; // deferred: 25% trust reduction on success
+      G.legit = Math.min(15, Math.max(0, G.legit + adjDelta));
     }
     G.threadsUsed = Math.max(0, G.threadsUsed-(i.threadSlots??1));
     const ticker = document.getElementById("limbo-ticker");
@@ -6011,6 +6017,8 @@ function resolve(i){
     if(i.severity >= 3) { trustDelta = 2; trustReason = "Critical incident resolved"; }
     else if(i.severity >= 2) { trustDelta = 1; trustReason = "High-priority incident resolved"; }
     else { trustDelta = 0.5; trustReason = "Call handled"; }
+    // Deferred call: community noticed the delay — 25% trust reduction on success
+    if(i._deferred) trustDelta *= 0.75;
 
     // commsEvent: set commsDegraded flag regardless of outcome
     if(i.commsEventFlag && !G.commsDegraded) {
@@ -7031,20 +7039,62 @@ function doDispatch(){
 
 function doDefer(){
   const i=G.mInc; if(!i) return;
-  // Defer: acknowledge but delay — buys more pending time, raises fail risk
-  const addMinutes = 8 + Math.floor(Math.random()*7); // 8-14 extra game-minutes
-  const addMs = addMinutes * (1000 / (480/720)) * (1/TICK_MS) * TICK_MS; // convert to timerMs equivalent
-  // pendingWindow is in game-minutes — extend it
-  i.pendingWindow = (i.pendingWindow||45) + addMinutes;
-  i.pendingWarned = false; // reset warning so player gets another heads-up
-  // Raise fail chance — deferred calls are harder to resolve cleanly
-  i.failChance = Math.min(0.85, (i.failChance||i.failBaseChance||0.1) + 0.12);
-  i.limboChance = Math.min(0.85, (i.limboChance||i.limboBaseChance||0.15) + 0.08);
-  comm("dispatch","Dispatch: "+i.title+" — acknowledged, unable to respond immediately. Monitoring.");
+  i._deferred = true;
+  i.occurMin = G.minute; // reset timeout window to full
+  i.warnFired = false;   // re-arm escalating warnings
+  i.critFired = false;
+  comm("dispatch","Dispatch: "+i.title+" — "+i.district+": caller advised, hold for response.");
   closeModal();
 }
 
 let _declineConfirmTimer = null;
+let _qDeclineTimer = null;
+
+function queueDefer(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="Pending") return;
+  i._deferred = true;
+  i.occurMin = G.minute; // reset timeout window to full
+  i.warnFired = false;   // re-arm escalating warnings for new window
+  i.critFired = false;
+  comm("dispatch","Dispatch: "+i.title+" — "+i.district+": caller advised, hold for response.");
+  notif(i.title+" — deferred","");
+  renderQueue();
+}
+
+function queueDecline(incId){
+  if(G._quickDeclineConfirm === incId){
+    // Second tap — execute
+    clearTimeout(_qDeclineTimer);
+    G._quickDeclineConfirm = null;
+    doQuickDecline(incId);
+  } else {
+    // First tap — arm confirm state, auto-reset after 2.5s
+    if(G._quickDeclineConfirm) clearTimeout(_qDeclineTimer);
+    G._quickDeclineConfirm = incId;
+    _qDeclineTimer = setTimeout(()=>{
+      G._quickDeclineConfirm = null;
+      renderQueue();
+    }, 2500);
+    renderQueue();
+  }
+}
+
+function doQuickDecline(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="Pending") return;
+  const iFailFx = i.failFx||{};
+  if(G.night > 1) G.spread = Math.max(0, G.spread+(iFailFx.spread||0));
+  const declineDelta = i.severity >= 3 ? -1 : -0.5;
+  G.legit = Math.max(0, G.legit + declineDelta);
+  if((iFailFx.vol||0)>0) markVol(i.district);
+  comm("alert","✖ CALL DECLINED: "+i.title); G.failedCt++;
+  checkFired();
+  removePin(i.id); removeUnitMarkers(i.id);
+  G.incidents = G.incidents.filter(x=>x.id!==incId);
+  renderQueue(); renderUnits(); topBar();
+}
+
 function confirmDecline(){
   const btn = document.getElementById("btn-decline");
   if(!btn) { doAbandon(); return; }
@@ -8498,6 +8548,13 @@ function renderQueue(){
       const recallBtn = (i.status==="Traveling" || i.isDefendMission || i.isCleanseMission || i.isFortifyMission || i.isCollectionMission)
         ? `<button class="qi-recall" onclick="event.stopPropagation();recallUnit('${i.id}')">↩ Recall</button>`
         : "";
+      // Defer + quick-decline buttons: only on unassigned pending cards
+      const showPendingActions = i.status==="Pending" && i.assignedUnits.length===0 && i.pendingWindow < 999;
+      const isConfirming = G._quickDeclineConfirm === i.id;
+      const pendingActions = showPendingActions
+        ? `<button class="qi-qdecline${isConfirming?" qi-confirming":""}" onclick="event.stopPropagation();queueDecline('${i.id}')">${isConfirming?"Confirm?":"Decline"}</button>`
+          + `<button class="qi-defer" onclick="event.stopPropagation();queueDefer('${i.id}')">Defer</button>`
+        : "";
       // Spawn-dark incident — show masked card
       if(i.isSpawnDark) {
         return `
@@ -8533,7 +8590,7 @@ function renderQueue(){
             <span class="qi-title">${i.title}</span>
             <span style="font-size:9px;color:var(--${sevColor})">${sevLabel}</span>
             <button class="qi-comms-link" onclick="event.stopPropagation();scrollToIncComms('${i.id}')" title="Scroll to comms">◉</button>
-            ${recallBtn}
+            ${recallBtn}${pendingActions}
           </div>
           <div class="qi-r2">
             <span>${i.district} · ${i.assignedUnits.length>0?i.assignedUnits.join(", "):"Unassigned"}</span>
