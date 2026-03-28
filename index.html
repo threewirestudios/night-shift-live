@@ -4916,7 +4916,7 @@ function newGame() {
     if(!confirm("Start a new shift? Your Night "+save.night+" save will be lost.")) return;
     clearSave();
   }
-  CARRY = { legit:12, shiftChoices:[], choiceData:[], commsDegraded:false, unitLost:null, spreadHistory:[], legitHistory:[], tut_seen:new Set(), lostDistricts:new Set(), hqDistrict:"Civic Core" };
+  CARRY = { legit:10, shiftChoices:[], choiceData:[], commsDegraded:false, unitLost:null, spreadHistory:[], legitHistory:[], tut_seen:new Set(), lostDistricts:new Set(), hqDistrict:"Civic Core" };
   enterGame(1);
 }
 
@@ -6734,14 +6734,18 @@ function doRecontact() {
   const delay = rng(6,12) * 1000;
   setTimeout(()=>{
     if(responded){
-      // Comms restored — small success boost, incident continues running
-      if(inc){
-        inc.failChance = Math.max(0, (inc.failChance||0.1) - 0.06);
-        inc._darkRunning = false; // unit is back — exitLimbo normally
-        exitLimbo(inc);
+      // Re-check incident is still live — resolveFromDark may have fired in the delay window
+      const stillLive = G.incidents.find(x => x.id === i.id);
+      if(stillLive){
+        stillLive.failChance = Math.max(0, (stillLive.failChance||0.1) - 0.06);
+        stillLive._darkRunning = false; // unit is back — exitLimbo normally
+        exitLimbo(stillLive);
+        document.getElementById("m-situation-result").textContent = u+" responded. Comms restored.";
+      } else {
+        // Incident already resolved while we were waiting — just fire the comm
+        document.getElementById("m-situation-result").textContent = u+" responded — incident already resolved.";
       }
       comm("unit", u + ": Dispatch — copy. Had a dead zone. Back on net.");
-      document.getElementById("m-situation-result").textContent = u+" responded. Comms restored.";
     } else {
       comm("dispatch", "Dispatch: " + u + " — no response. Continuing to monitor.");
       document.getElementById("m-situation-result").textContent = "No response. "+u+" is still dark — incident running.";
@@ -10226,7 +10230,7 @@ document.addEventListener("keydown", function(e) {
 
         <div class="settings-section">
           <div class="settings-section-title">Community Trust</div>
-          <p style="font-size:10px;color:var(--text2);line-height:1.65;margin:0 0 14px;">Trust measures public confidence in your dispatch operation. It is your primary performance metric &mdash; each shift is graded on it at debrief. Effective responses build trust; failed calls, ignored incidents, and poor decisions erode it. Starting trust: 80% (12 of 15).</p>
+          <p style="font-size:10px;color:var(--text2);line-height:1.65;margin:0 0 14px;">Trust measures public confidence in your dispatch operation. It is your primary performance metric &mdash; each shift is graded on it at debrief. Effective responses build trust; failed calls, ignored incidents, and poor decisions erode it. Starting trust: 67% (10 of 15).</p>
           <table class="trust-tbl">
             <thead><tr><th>Event</th><th>Change</th></tr></thead>
             <tbody>
