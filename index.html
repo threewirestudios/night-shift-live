@@ -199,6 +199,12 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .qi-qdecline{padding:2px 7px;background:transparent;border:1px solid rgba(200,60,60,.5);color:rgba(200,60,60,.7);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
 .qi-qdecline:hover{background:rgba(200,40,40,.12);border-color:var(--red);color:var(--red);}
 .qi-qdecline.qi-confirming{background:rgba(200,40,40,.18);border-color:var(--red);color:var(--red);}
+.qi-dark-btn{padding:2px 6px;background:transparent;border:1px solid rgba(128,48,192,.55);color:var(--limbo);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-dark-btn:hover{background:rgba(128,48,192,.15);border-color:var(--limbo);}
+.qi-staged-push{padding:2px 6px;background:transparent;border:1px solid rgba(200,140,20,.55);color:var(--amber);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-staged-push:hover{background:rgba(200,140,20,.15);border-color:var(--amber);}
+.qi-staged-caution{padding:2px 6px;background:transparent;border:1px solid var(--text3);color:var(--text3);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-staged-caution:hover{background:rgba(140,160,140,.12);border-color:var(--text2);color:var(--text2);}
 .qi-pending-actions{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:3px;align-items:flex-end;}
 .qi-recall{float:right;margin-top:3px;padding:2px 8px;background:transparent;border:1px solid var(--amber);
   color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;border-radius:2px;
@@ -516,7 +522,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.92</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.93</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -7103,6 +7109,92 @@ function queueDecline(incId){
   }
 }
 
+function queueRecontact(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="Limbo" || !i._darkRunning) return;
+  const u = i.assignedUnits[0] || "Unit";
+  i._playerActed = true;
+  i._recontactPending = true;
+  if(!G.debriefChoices) G.debriefChoices = [];
+  G.debriefChoices.push({type:"radio_dark", call:i.title, choice:"recontact", unit:u});
+  comm("dispatch", "Dispatch to "+u+" — direct contact attempt. Please respond. What is your status?");
+  notif(u+" — re-contact transmitted","lmb");
+  renderQueue();
+  const responded = Math.random() < 0.55;
+  setTimeout(()=>{
+    const stillLive = G.incidents.find(x=>x.id===incId);
+    if(stillLive) stillLive._recontactPending = false;
+    if(responded){
+      if(stillLive && stillLive._darkRunning){
+        stillLive.failChance = Math.max(0, (stillLive.failChance||0.1) - 0.06);
+        stillLive._darkRunning = false;
+        stillLive.status = "OnScene";
+        stillLive.limboType = null;
+        stillLive.assignedUnits.forEach(uid=>{ const uu=G.units.find(x=>x.id===uid); if(uu) uu.status="OnScene"; });
+      }
+      comm("unit", u+": Dispatch — copy. Had a dead zone. Back on net.");
+    } else {
+      comm("dispatch", "Dispatch: "+u+" — no response. Continuing to monitor.");
+    }
+    renderQueue(); renderUnits();
+  }, rng(6,12)*1000);
+}
+function queueSendBackup(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="Limbo" || !i._darkRunning) return;
+  const u = i.assignedUnits[0] || "Unit";
+  const backup = G.units.find(x=>x.status==="Available"&&i.allowedUnits.includes(x.type)&&x.id!==u);
+  if(!backup) return;
+  backup.status = "Traveling"; backup.assignedTo = incId;
+  i.assignedUnits.push(backup.id);
+  i._playerActed = true;
+  i.failChance = Math.min(0.05, i.failChance);
+  if(!G.debriefChoices) G.debriefChoices = [];
+  G.debriefChoices.push({type:"radio_dark", call:i.title, choice:"send_backup", unit:u, backup:backup.id});
+  comm("dispatch", "Dispatch: "+backup.id+" — proceed to "+i.district+". Welfare check on "+u+".");
+  const travelMs = rng(25,45)*1000;
+  addUnitMarker(incId, backup.id, backup.type, travelMs);
+  notif(backup.id+" en route — welfare check on "+u,"lmb");
+  const backupId = backup.id;
+  setTimeout(()=>{
+    const stillLive = G.incidents.find(x=>x.id===incId);
+    if(!stillLive || !stillLive._darkRunning) return;
+    comm("unit", backupId+": Dispatch — arrived "+stillLive.district+". Got eyes on "+u+". Moving in to assist.");
+    stillLive._darkRunning = false;
+    exitLimbo(stillLive);
+  }, travelMs);
+  renderQueue(); renderUnits(); topBar();
+}
+function queueStagedPush(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="Limbo" || i._darkRunning) return;
+  const u = i.assignedUnits[0] || "Unit";
+  const ctx = i.stagedContext || {};
+  const mod = ctx.pushFailMod || 0;
+  i.failChance = Math.max(0, Math.min(0.95, (i.failChance||0) + mod));
+  if(mod >= 0.08) i.failCause = "stagedPush";
+  i.stagedResolved = true;
+  if(!G.debriefChoices) G.debriefChoices = [];
+  G.debriefChoices.push({type:"staged", call:i.title, choice:"push", unit:u});
+  comm("dispatch", "Dispatch: "+u+" — proceed when ready. Your judgment on scene.");
+  setTimeout(()=>comm("unit", u+": Copy. Moving in now."), 600);
+  setTimeout(()=>{ if(i.status==="Limbo") exitLimbo(i, 0.35); }, 800);
+  renderQueue();
+}
+function queueStagedCaution(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="Limbo" || i._darkRunning) return;
+  const u = i.assignedUnits[0] || "Unit";
+  const ctx = i.stagedContext || {};
+  i.failChance = Math.max(0, Math.min(0.95, (i.failChance||0) + (ctx.holdFailMod||0)));
+  i.stagedResolved = true;
+  if(!G.debriefChoices) G.debriefChoices = [];
+  G.debriefChoices.push({type:"staged", call:i.title, choice:"hold", unit:u});
+  comm("dispatch", "Dispatch: "+u+" — hold position. Advise when conditions allow.");
+  setTimeout(()=>comm("unit", u+": Understood. Maintaining stage."), 600);
+  setTimeout(()=>{ if(i.status==="Limbo") exitLimbo(i, 0.9); }, 1800);
+  renderQueue();
+}
 function doQuickDecline(incId){
   const i = G.incidents.find(x=>x.id===incId);
   if(!i || i.status!=="Pending") return;
@@ -8578,6 +8670,23 @@ function renderQueue(){
         ? `<button class="qi-defer" onclick="event.stopPropagation();queueDefer('${i.id}')">Defer</button>`
           + `<button class="qi-qdecline${isConfirming?" qi-confirming":""}" onclick="event.stopPropagation();queueDecline('${i.id}')">${isConfirming?"Confirm?":"Decline"}</button>`
         : "";
+      // Dark (RadioSilence) card actions
+      const u0 = i.assignedUnits[0] || "Unit";
+      const showDarkActions = i.status==="Limbo" && i.limboType==="RadioSilence" && i._darkRunning && !i._recontactPending;
+      const darkBackupUnit = showDarkActions && G.units.find(x=>x.status==="Available"&&i.allowedUnits.includes(x.type)&&x.id!==u0);
+      const darkActions = showDarkActions
+        ? `<button class="qi-dark-btn" onclick="event.stopPropagation();queueRecontact('${i.id}')">Recontact</button>`
+          + (darkBackupUnit ? `<button class="qi-dark-btn" onclick="event.stopPropagation();queueSendBackup('${i.id}')">Backup</button>` : "")
+        : "";
+      // Staged (HumanFailure) card actions — non-mission regular calls only
+      const _isMission = i.isDefendMission||i.isCleanseMission||i.isFortifyMission||i.isCollectionMission;
+      const showStagedActions = i.status==="Limbo" && i.limboType==="HumanFailure" && !i._darkRunning && !_isMission;
+      const stagedActions = showStagedActions
+        ? `<button class="qi-staged-push" onclick="event.stopPropagation();queueStagedPush('${i.id}')">Push</button>`
+          + `<button class="qi-staged-caution" onclick="event.stopPropagation();queueStagedCaution('${i.id}')">Caution</button>`
+        : "";
+      const showCardActions = showPendingActions || showDarkActions || showStagedActions;
+      const cardActions = pendingActions + darkActions + stagedActions;
       // Spawn-dark incident — show masked card
       if(i.isSpawnDark) {
         return `
@@ -8607,7 +8716,7 @@ function renderQueue(){
       const qTagLabel = i.isCleanseMission?'CLEANSE':i.isDefendMission?'DEFEND':i.isFortifyMission?'FORTIFY':(i.family==='Infrastructure'?'INFRA':i.family.toUpperCase());
       return `
         <div class="queue-item ${ld.cls} ${qItemClass} ${i.critFired&&i.status==="Pending"?"qi-urgent":""}"
-             onclick="openModal('${i.id}')"${showPendingActions?' style="padding-right:52px"':''}>
+             onclick="openModal('${i.id}')"${showCardActions?' style="padding-right:52px"':''}>
           <div class="qi-r1">
             <span class="qi-ftag ${qTag}">${qTagLabel}</span>
             <span class="qi-title">${i.title}</span>
@@ -8621,7 +8730,7 @@ function renderQueue(){
           </div>
           ${hoverDetail}
           ${timerBar}
-          ${showPendingActions?`<div class="qi-pending-actions">${pendingActions}</div>`:""}
+          ${showCardActions?`<div class="qi-pending-actions">${cardActions}</div>`:""}
         </div>`;
     }).join("");
   const responding = active.filter(i=>i.status!=="Pending").length;
