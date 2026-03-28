@@ -5335,6 +5335,8 @@ function spawn(tpl){
 }
 
 function tickPending(i, dt) {
+  // Freeze pending timer while this incident's card is open (player is reading/deciding)
+  if(G.mInc && G.mInc.id === i.id) { i.occurMin += dt; return; }
   const elapsed = G.minute - i.occurMin;
   const w = i.pendingWindow;
   const pct = elapsed / w;
@@ -7039,6 +7041,7 @@ function doDispatch(){
 
 function doDefer(){
   const i=G.mInc; if(!i) return;
+  if(!i._deferred) i.failChance = Math.min(0.85, (i.failChance||i.failBaseChance||0.1) + 0.10); // one-time hit
   i._deferred = true;
   i.occurMin = G.minute; // reset timeout window to full
   i.warnFired = false;   // re-arm escalating warnings
@@ -7053,6 +7056,7 @@ let _qDeclineTimer = null;
 function queueDefer(incId){
   const i = G.incidents.find(x=>x.id===incId);
   if(!i || i.status!=="Pending") return;
+  if(!i._deferred) i.failChance = Math.min(0.85, (i.failChance||i.failBaseChance||0.1) + 0.10); // one-time hit
   i._deferred = true;
   i.occurMin = G.minute; // reset timeout window to full
   i.warnFired = false;   // re-arm escalating warnings for new window
