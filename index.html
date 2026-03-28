@@ -5536,7 +5536,7 @@ function arrive(i){
     (i.onSceneLines||[]).forEach(line=>{
       const text = typeof line === 'string' ? line : (line.t||"");
       const resolved = resolveLine(text, dispUnit);
-      setTimeout(()=>comm("unit", resolved), delay);
+      setTimeout(()=>comm("narrative", resolved), delay);
       delay += 2400;
     });
     if(i.supervisorLine) setTimeout(()=>comm("system", resolveLine(i.supervisorLine, dispUnit)), delay);
@@ -5552,9 +5552,9 @@ function arrive(i){
     const dispUnit = i.assignedUnits[0] || "PW1";
     G._speedBeforeCtx = G.speed;
     // Brief arrival comm before we start the sequence
-    comm("dispatch", "Dispatch: "+dispUnit+" — confirm arrival at Docklands perimeter. Report back.");
+    comm("narrative", "Dispatch: "+dispUnit+" — confirm arrival at Docklands perimeter. Report back.");
     setTimeout(()=>{
-      comm("unit", dispUnit+": Dispatch — at the perimeter. Something is wrong here.");
+      comm("narrative", dispUnit+": Dispatch — at the perimeter. Something is wrong here.");
     }, 1500);
     // Open modal which will play remaining lines and then show decision
     setTimeout(()=>openDocklandsModal(i), 2500);
@@ -6125,7 +6125,7 @@ function resolve(i){
           removePin(x.id); removeUnitMarkers(x.id);
           markDistrictLost(x.district);
           setTimeout(()=>{
-            comm("unit","[STATIC] — "+x.district+" — we can't hold — they're through the — [SIGNAL LOST]");
+            comm("narrative","[STATIC] — "+x.district+" — we can't hold — they're through the — [SIGNAL LOST]");
           }, 1400 + idx*900);
         });
         renderQueue(); renderUnits();
@@ -8091,13 +8091,13 @@ function doSewerRecall() {
   document.getElementById("sewer-opts").querySelectorAll(".btn-situation").forEach(b=>b.disabled=true);
 
   const path = i.recallPath;
-  comm("dispatch", resolveLine(path.dispatchLine, dispUnit));
-  setTimeout(()=>comm("system", resolveLine(path.supervisorDismissalLine, dispUnit)), 1200);
+  comm("narrative", resolveLine(path.dispatchLine, dispUnit));
+  setTimeout(()=>comm("narrative", resolveLine(path.supervisorDismissalLine, dispUnit)), 1200);
 
   // Delay return lines for dramatic effect
   let delay = 3000;
   (path.unitReturnLines||[]).forEach(line=>{
-    setTimeout(()=>comm("unit", resolveLine(line, dispUnit)), delay);
+    setTimeout(()=>comm("narrative", resolveLine(line, dispUnit)), delay);
     delay += 2200;
   });
   setTimeout(()=>{
@@ -8143,12 +8143,12 @@ function doSewerOverride() {
   setSpeed(G._speedBeforeCtx || 1);
 
   const path = i.overridePath;
-  comm("dispatch", resolveLine(path.dispatchLine, dispUnit));
+  comm("narrative", resolveLine(path.dispatchLine, dispUnit));
 
   let delay = 800;
   (path.unitLines||[]).forEach((line, idx)=>{
     const lineDelay = path.unitLineDelays ? path.unitLineDelays[idx] : 2000;
-    setTimeout(()=>comm("unit", resolveLine(line, dispUnit)), delay);
+    setTimeout(()=>comm("narrative", resolveLine(line, dispUnit)), delay);
     delay += lineDelay;
   });
 
@@ -8199,7 +8199,7 @@ function openDocklandsModal(i) {
   let delay = 400;
   (i.docklandsOnSceneLines || []).forEach((line, idx) => {
     const lineDelay = i.docklandsOnSceneDelays ? i.docklandsOnSceneDelays[idx] : 2500;
-    setTimeout(() => comm("unit", resolveLine(line, dispUnit)), delay);
+    setTimeout(() => comm("narrative", resolveLine(line, dispUnit)), delay);
     delay += lineDelay;
   });
 
@@ -8254,14 +8254,14 @@ function doDocklandsSearch() {
     return;
   }
 
-  comm("dispatch", "Dispatch: "+backup.id+" — I need you at Docklands perimeter road. Welfare check on a missing crew. Report back immediately.");
-  setTimeout(()=>comm("unit", backup.id+": Copy. Rolling now. This feels wrong, Dispatch."), 1500);
-  setTimeout(()=>comm("unit", backup.id+": ...On the road. I see the fence. I see the marks."), 5000);
+  comm("narrative", "Dispatch: "+backup.id+" — I need you at Docklands perimeter road. Welfare check on a missing crew. Report back immediately.");
+  setTimeout(()=>comm("narrative", backup.id+": Copy. Rolling now. This feels wrong, Dispatch."), 1500);
+  setTimeout(()=>comm("narrative", backup.id+": ...On the road. I see the fence. I see the marks."), 5000);
 
   const foundThem = Math.random() < 0.45;
   setTimeout(()=>{
     if(foundThem) {
-      comm("unit", backup.id+": Dispatch — I found them. They're shaken up. Bringing them out now. Do not ask me what they saw.");
+      comm("narrative", backup.id+": Dispatch — I found them. They're shaken up. Bringing them out now. Do not ask me what they saw.");
       setTimeout(()=>{
         comm("success", "✔ Docklands crew located — both units returning. District sealed.");
         notif("Docklands crew found — both units returning","green");
@@ -8288,7 +8288,7 @@ function doDocklandsWait() {
   _docklandsIncId = null;
   setSpeed(G._speedBeforeCtx || 1);
 
-  comm("dispatch", "Dispatch: All units — hold position. Docklands channel open. Waiting for contact.");
+  comm("narrative", "Dispatch: All units — hold position. Docklands channel open. Waiting for contact.");
   setTimeout(()=>{
     comm("alert", "⚠ Docklands crew — no contact after extended hold. Unit marked unaccounted.");
     comm("narrative", "◈ We've lost control of Docklands. Not sure if anyone made it out. ◈");
@@ -8305,9 +8305,9 @@ function doDocklandsWriteOff() {
   _docklandsIncId = null;
   setSpeed(G._speedBeforeCtx || 1);
 
-  comm("dispatch", "Dispatch: Docklands crew — no contact. Logging as unaccounted. District sealed. Nobody goes in.");
+  comm("narrative", "Dispatch: Docklands crew — no contact. Logging as unaccounted. District sealed. Nobody goes in.");
   setTimeout(()=>{
-    comm("system", "Supervisor: Noted. That's the right call. It's a hard call. Log it and keep the board moving.");
+    comm("narrative", "Supervisor: Noted. That's the right call. It's a hard call. Log it and keep the board moving.");
     notif("Docklands sealed — crew unaccounted","red");
     _docklandsClose(i, false, "writeoff");
   }, 3500);
