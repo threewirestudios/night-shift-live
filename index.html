@@ -516,7 +516,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.91</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.92</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -5769,10 +5769,14 @@ function trigLimbo(i){
               unit.readiness = unit.fatigue<=8?"Red":unit.fatigue<=14?"Yellow":"Green";
               unit.status = "Available"; unit.assignedTo = null;
             });
-            G.threadsUsed = Math.max(0, G.threadsUsed-1);
+            G.threadsUsed = Math.max(0, G.threadsUsed-(i.threadSlots??1));
             G.failedCt++;
             const iFailFx = i.failFx||{};
             G.spread = Math.max(0,G.spread+(iFailFx.spread||0));
+            if((iFailFx.vol||0)>0){G.distVol[i.district]=(G.distVol[i.district]||0)+1;markVol(i.district);}
+            if(!G.debriefFlags) G.debriefFlags=[];
+            G.debriefFlags.push({title:i.title+' — Pulled Back in Blackout',district:i.district,reason:"Unit pulled back during radio silence — no dispatcher contact."});
+            comm("alert","✖ "+i.title+" — unit pulled back. No dispatcher contact during blackout.");
             const ticker=document.getElementById("limbo-ticker");
             if(ticker){ticker.textContent="";ticker.style.borderColor="transparent";}
             removePin(i.id); removeUnitMarkers(i.id);
@@ -6676,12 +6680,22 @@ function doSendBackup() {
   backup.status = "Traveling"; backup.assignedTo = i.id;
   i.assignedUnits.push(backup.id);
   const inc2 = G.incidents.find(x=>x.id===i.id);
+  const travelMs = rng(25,45)*1000;
   comm("dispatch", "Dispatch: " + backup.id + " — proceed to " + i.district + ". Welfare check on " + u + ".");
-  addUnitMarker(i.id, backup.id, backup.type, rng(25,45)*1000);
+  addUnitMarker(i.id, backup.id, backup.type, travelMs);
   if(!G.debriefChoices) G.debriefChoices = [];
   G.debriefChoices.push({type:"radio_dark", call:i.title, choice:"send_backup", unit:u, backup:backup.id});
   // Mark player acted + near-certain success
   if(inc2){ inc2._playerActed = true; inc2.failChance = Math.min(0.05, inc2.failChance); }
+  // Formal arrival: after travel time, exit dark state and restore both units to OnScene
+  const incId = i.id, backupId = backup.id;
+  setTimeout(()=>{
+    const stillLive = G.incidents.find(x=>x.id===incId);
+    if(!stillLive || !stillLive._darkRunning) return; // already resolved
+    comm("unit", backupId+": Dispatch — arrived "+stillLive.district+". Got eyes on "+u+". Moving in to assist.");
+    stillLive._darkRunning = false;
+    exitLimbo(stillLive);
+  }, travelMs);
   document.getElementById("m-situation-result").textContent =
     backup.id + " is en route.";
   document.querySelectorAll("#m-situation-opts .btn-situation").forEach(b=>b.disabled=true);
@@ -7053,6 +7067,7 @@ function doDefer(){
 
 let _declineConfirmTimer = null;
 let _qDeclineTimer = null;
+let _stagedBannerTimer = null;
 
 function queueDefer(incId){
   const i = G.incidents.find(x=>x.id===incId);
@@ -8817,6 +8832,8 @@ function showStagedBanner(unitName){
   if(!b) return;
   if(t) t.textContent = "⬡ "+unitName.toUpperCase()+" — STAGED  ·  AWAITING YOUR ORDER";
   b.style.display = "flex";
+  clearTimeout(_stagedBannerTimer);
+  _stagedBannerTimer = setTimeout(()=>{ b.style.display="none"; }, 7000);
 }
 
 function updateStagedBanner(){
@@ -8825,6 +8842,7 @@ function updateStagedBanner(){
   if(!b) return;
   const staged = G.incidents ? G.incidents.filter(i=>i.status==="Limbo"&&i.limboType==="HumanFailure") : [];
   if(staged.length === 0){
+    clearTimeout(_stagedBannerTimer);
     b.style.display = "none";
     // Reset to default amber styling
     b.style.background = "rgba(200,140,20,.13)";
@@ -8833,7 +8851,8 @@ function updateStagedBanner(){
     if(bt) bt.style.color = "var(--amber)";
     return;
   }
-  b.style.display = "flex";
+  // Don't re-show if auto-hide timer already dismissed the banner
+  if(b.style.display === "none") return;
   const t = document.getElementById("staged-banner-text");
   if(t){
     if(staged.length === 1){
