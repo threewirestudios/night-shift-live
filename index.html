@@ -8557,8 +8557,8 @@ function renderQueue(){
       const showPendingActions = i.status==="Pending" && i.assignedUnits.length===0 && i.pendingWindow < 999;
       const isConfirming = G._quickDeclineConfirm === i.id;
       const pendingActions = showPendingActions
-        ? `<button class="qi-qdecline${isConfirming?" qi-confirming":""}" onclick="event.stopPropagation();queueDecline('${i.id}')">${isConfirming?"Confirm?":"Decline"}</button>`
-          + `<button class="qi-defer" onclick="event.stopPropagation();queueDefer('${i.id}')">Defer</button>`
+        ? `<button class="qi-defer" onclick="event.stopPropagation();queueDefer('${i.id}')">Defer</button>`
+          + `<button class="qi-qdecline${isConfirming?" qi-confirming":""}" onclick="event.stopPropagation();queueDecline('${i.id}')">${isConfirming?"Confirm?":"Decline"}</button>`
         : "";
       // Spawn-dark incident — show masked card
       if(i.isSpawnDark) {
