@@ -5352,11 +5352,7 @@ function tickPending(i, dt) {
 
 function pendingTimeout(i) {
   const willEscalate = i.severity >= 2;
-  // Night 3+: Sev1 abandon costs -1 (triage-under-overload is acceptable)
-  // Night 1-2: Sev1 abandon costs -2 (no excuse not to respond)
-  const sev1Cost = G.night >= 2 ? -1 : -2;
-  const sev3Cost = -2;
-  const trustDelta = i.severity >= 3 ? sev3Cost : (willEscalate ? -1 : sev1Cost);
+  const trustDelta = i.severity >= 3 ? -2 : -1;
 
   comm("alert", "✖ "+i.title+" — "+i.district+": no response before the situation closed out.", i.id);
   G.legit = Math.max(0, G.legit + trustDelta);
@@ -7059,7 +7055,8 @@ function doAbandon(){
   const i=G.mInc; if(!i) return;
   const iFailFx = i.failFx||{};
   if(G.night > 1) G.spread=Math.max(0,G.spread+(iFailFx.spread||0));
-  G.legit=Math.max(0,G.legit+(iFailFx.legit||0));
+  const declineDelta = i.severity >= 3 ? -1 : -0.5;
+  G.legit = Math.max(0, G.legit + declineDelta);
   if((iFailFx.vol||0)>0) markVol(i.district);
   comm("alert","✖ CALL DECLINED: "+i.title); G.failedCt++;
   // Free any assigned units (may be in Limbo state — must clean up or they stay ghosted)
@@ -7200,7 +7197,8 @@ function endShift(){
   CARRY.tut_seen = G.tut_seen || new Set();
   // Clean-night bonus: +1 trust if no fails and no timeouts
   if(G.failedCt === 0) {
-    G.legit = Math.min(15, G.legit + 1);
+    const nightBonus = G.night * 0.25;
+    G.legit = Math.min(15, G.legit + nightBonus);
     CARRY.legit = G.legit;
     comm("system","─── SHIFT END ─── Clean night. Community trust up to "+trustPct()+".");
   } else {
@@ -9116,7 +9114,7 @@ function defendMissionUnitRolls(i){
             if(!CARRY.unitsLost) CARRY.unitsLost = [];
             CARRY.unitsLost.push(unit.id);
             G.units = G.units.filter(u=>u.id!==unit.id);
-            G.legit = Math.max(0, G.legit - 2);
+            G.legit = Math.max(0, G.legit - 1);
             removeUnitMarkers(i.id);
             renderUnits(); topBar();
             if(unit.isSuppressor && G.night === 5) {
