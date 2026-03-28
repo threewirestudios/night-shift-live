@@ -1359,15 +1359,15 @@ const ITPL_N1 = [
         {
           id:"Q_VICTIM",label:"Ask caller: Is the victim conscious and breathing?",
           responses:[
-            {t:"Caller: He's moving — trying to get up. Looks bad though, there's a lot of blood.",flags:["VictimConscious"],lA:.02,fA:.01},
-            {t:"Caller: I don't think so. He's not moving. Someone's trying to talk to him.",flags:["VictimUnresponsive"],lA:.08,fA:.04}
+            {t:"Caller: He's moving — trying to get up. Looks bad though, there's a lot of blood.",flags:["VictimConscious"],lA:-.01,fA:-.01},
+            {t:"Caller: I don't think so. He's not moving. Someone's trying to talk to him.",flags:["VictimUnresponsive"],lA:-.04,fA:-.02}
           ]
         },
         {
           id:"Q_SUSPECT",label:"Ask caller: Is the suspect still on scene?",
           responses:[
             {t:"Caller: No — he ran north toward the waterfront. Black jacket.",flags:["SuspectFled"],lA:0,fA:0},
-            {t:"Caller: He's still here, arguing with people near the door. He might have something.",flags:["SuspectPresent"],lA:.10,fA:.03}
+            {t:"Caller: He's still here, arguing with people near the door. He might have something.",flags:["SuspectPresent"],lA:-.05,fA:-.02}
           ]
         }
       ]
@@ -1427,7 +1427,7 @@ const ITPL_N1 = [
           id:"Q_COUNT",label:"Ask caller: How many people are affected?",
           responses:[
             {t:"Caller: Just the one I can see — a man outside the bodega.",flags:["SinglePatient"],lA:0,fA:0},
-            {t:"Caller: At least three or four. They're scattered around the corner.",flags:["MultiplePatients"],lA:.05,fA:.02}
+            {t:"Caller: At least three or four. They're scattered around the corner.",flags:["MultiplePatients"],lA:-.03,fA:-.01}
           ]
         }
       ]
@@ -1631,7 +1631,7 @@ const ITPL_N2 = [
           id:"Q_CONSCIOUS",label:"Ask caller: Are any victims conscious?",
           responses:[
             {t:"Caller: One is — the others aren't responding.",flags:["PartialConsciousness"],lA:0,fA:0},
-            {t:"Caller: None of them. Nobody's responding at all.",flags:["AllUnconscious"],lA:.05,fA:.03}
+            {t:"Caller: None of them. Nobody's responding at all.",flags:["AllUnconscious"],lA:-.03,fA:-.02}
           ]
         }
       ]
@@ -1693,7 +1693,7 @@ const ITPL_N2 = [
           id:"Q_SCENE_SAFE",label:"Ask caller: Is the attacker still on scene?",
           responses:[
             {t:"Caller: He's gone — ran toward the waterfront.",flags:["SaferEntry"],lA:-.03,fA:-.01},
-            {t:"Caller: I can't tell. He was moving toward the alley.",flags:["SceneUnclear"],lA:.05,fA:.02}
+            {t:"Caller: I can't tell. He was moving toward the alley.",flags:["SceneUnclear"],lA:0,fA:0}
           ]
         }
       ]
@@ -1784,8 +1784,8 @@ const ITPL_N2 = [
         {
           id:"Q_WEAPONS",label:"Ask caller: Is the subject believed to be armed?",
           responses:[
-            {t:"Caller: Yes — I saw something when he went in.",flags:["ArmedSubject"],lA:.07,fA:.04},
-            {t:"Caller: I don't know. I didn't see anything.",flags:["SceneUnclear"],lA:.03,fA:.01}
+            {t:"Caller: Yes — I saw something when he went in.",flags:["ArmedSubject"],lA:-.04,fA:-.02},
+            {t:"Caller: I don't know. I didn't see anything.",flags:["SceneUnclear"],lA:0,fA:0}
           ]
         }
       ]
@@ -2071,7 +2071,7 @@ const ITPL_N3 = [
           id:"Q_THREAT",label:"Ask caller: Any indication of an active threat inside?",
           responses:[
             {t:"Caller: No — I haven't seen anyone come or go.",flags:["SaferEntry"],lA:-.04,fA:-.01},
-            {t:"Caller: I don't know. Something feels wrong.",flags:["SceneUnclear"],lA:.06,fA:.03}
+            {t:"Caller: I don't know. Something feels wrong.",flags:["SceneUnclear"],lA:0,fA:0}
           ]
         }
       ]
@@ -2112,7 +2112,7 @@ const ITPL_N3 = [
           id:"Q_ATTACKER",label:"Ask caller: Is the attacker contained or still active?",
           responses:[
             {t:"Caller: He's down — crowd got him cornered.",flags:["SaferEntry"],lA:-.05,fA:-.02},
-            {t:"Caller: Still active — multiple people involved.",flags:["ActiveThreat"],lA:.10,fA:.04}
+            {t:"Caller: Still active — multiple people involved.",flags:["ActiveThreat"],lA:-.05,fA:-.02}
           ]
         }
       ]
@@ -2173,7 +2173,7 @@ const ITPL_N3 = [
           id:"Q_PRESENTATION",label:"Ask coordinator: What are the unusual presentations?",
           responses:[
             {t:"Coordinator: Agitation, confusion. Behavioral — could be psych, could be substances.",flags:[],lA:0,fA:0},
-            {t:"Coordinator: Bite wounds. Multiple patients tonight, all the same pattern.",flags:["OutbreakSignal"],lA:.05,fA:.02}
+            {t:"Coordinator: Bite wounds. Multiple patients tonight, all the same pattern.",flags:["OutbreakSignal"],lA:-.03,fA:-.01}
           ]
         }
       ]
@@ -2214,7 +2214,7 @@ const ITPL_N3 = [
           id:"Q_LAST_KNOWN",label:"Ask caller: Are there last-known locations to focus the search?",
           responses:[
             {t:"Caller: Yes — two confirmed last-seen locations within two blocks.",flags:["FocusedSearch"],lA:-.06,fA:-.03},
-            {t:"Caller: No — they were spread across the whole district.",flags:["BroadSearch"],lA:.08,fA:.04}
+            {t:"Caller: No — they were spread across the whole district.",flags:["BroadSearch"],lA:-.04,fA:-.02}
           ]
         }
       ]
@@ -2275,15 +2275,15 @@ const ITPL_N3 = [
         {
           id:"Q_AMBULATORY",label:"Ask caller: Are any victims ambulatory?",
           responses:[
-            {t:"Caller: Most are down. A few moving — erratic, stumbling.",flags:["PartialContainment"],lA:.05,fA:.02},
-            {t:"Caller: All of them are up. They're moving toward people aggressively.",flags:["ActiveThreat","OutbreakActive"],lA:.12,fA:.06}
+            {t:"Caller: Most are down. A few moving — erratic, stumbling.",flags:["PartialContainment"],lA:-.03,fA:-.01},
+            {t:"Caller: All of them are up. They're moving toward people aggressively.",flags:["ActiveThreat","OutbreakActive"],lA:-.06,fA:-.03}
           ]
         },
         {
           id:"Q_PERIMETER",label:"Ask caller: Can a perimeter be established?",
           responses:[
             {t:"Caller: Yes — it's a parking lot, enclosed on three sides.",flags:["PerimeterPossible"],lA:-.06,fA:-.03},
-            {t:"Caller: No — open street, people running everywhere.",flags:["ContainmentFailed"],lA:.10,fA:.05}
+            {t:"Caller: No — open street, people running everywhere.",flags:["ContainmentFailed"],lA:-.05,fA:-.03}
           ]
         }
       ]
@@ -5940,7 +5940,7 @@ function resolveFromDark(i){
       G.failedCt++;
       const iFailFx = i.failFx||{};
       if(G.night > 1) G.spread = Math.max(0, G.spread+(iFailFx.spread||0));
-      G.legit = Math.max(0, G.legit+(iFailFx.legit||0));
+      G.legit = Math.max(0, G.legit - 1);
       if((iFailFx.vol||0)>0){G.distVol[i.district]=(G.distVol[i.district]||0)+1;markVol(i.district);}
       // District loss on failure — marks district lost and sets CARRY flags
       if(i.failLoseDistrict) {
@@ -5957,7 +5957,8 @@ function resolveFromDark(i){
       G.resolvedCt++;
       const iSuccFx = i.successFx||{};
       if(G.night > 1) G.spread = Math.max(0, G.spread+(iSuccFx.spread||0));
-      G.legit = Math.min(15, Math.max(0, G.legit+(iSuccFx.legit||0)));
+      const darkDelta = i.severity>=3?2:i.severity>=2?1:0.5;
+      G.legit = Math.min(15, Math.max(0, G.legit + darkDelta));
     }
     G.threadsUsed = Math.max(0, G.threadsUsed-(i.threadSlots??1));
     const ticker = document.getElementById("limbo-ticker");
@@ -5982,7 +5983,7 @@ function resolve(i){
     if(cause === "stagedPush") {
       trustDelta = -2; trustReason = "Poor dispatch decision";
     } else if(cause === "partialResponse") {
-      trustDelta = -1; trustReason = "Incomplete response";
+      trustDelta = 0; trustReason = "";
     } else if(cause === "wrongUnit") {
       trustDelta = 0; trustReason = "";
     } else {
@@ -5991,11 +5992,8 @@ function resolve(i){
   } else {
     if(i.severity >= 3) { trustDelta = 2; trustReason = "Critical incident resolved"; }
     else if(i.severity >= 2) { trustDelta = 1; trustReason = "High-priority incident resolved"; }
-    // Bonus: forced triage fully completed on success
-    if(i.triage && i.triage.forced) {
-      const allAsked = i.triage.questions.every(q => i.triageAsked[q.id] !== undefined);
-      if(allAsked) { trustDelta += 1; trustReason += (trustReason?", t":"T")+"horough pre-dispatch assessment"; }
-    }
+    else { trustDelta = 0.5; trustReason = "Call handled"; }
+
     // commsEvent: set commsDegraded flag regardless of outcome
     if(i.commsEventFlag && !G.commsDegraded) {
       G.commsDegraded = true;
