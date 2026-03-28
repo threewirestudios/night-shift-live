@@ -5983,6 +5983,8 @@ function resolve(i){
       trustDelta = -2; trustReason = "Poor dispatch decision";
     } else if(cause === "partialResponse") {
       trustDelta = -1; trustReason = "Incomplete response";
+    } else if(cause === "wrongUnit") {
+      trustDelta = 0; trustReason = "";
     } else {
       trustDelta = -1; trustReason = "Incident failed";
     }
