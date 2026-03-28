@@ -72,7 +72,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .incident-pin{cursor:pointer;pointer-events:bounding-box;}
 .pin-ring{opacity:0;} /* replaced by pin-countdown */
 @keyframes ping{0%{r:9;opacity:.8}70%{r:18;opacity:0}100%{r:18;opacity:0}}
-.incident-pin.responded .pin-countdown{opacity:.55;}
+.pin-countdown{transition:opacity .5s;}
 .comm-line.comm-linked{background:rgba(80,140,255,.12);border-left:2px solid #4a8cff;margin-left:-2px;transition:background .2s;}
 .incident-pin.responded{pointer-events:bounding-box;}
 #pin-tooltip{position:fixed;pointer-events:none;background:rgba(4,10,20,.94);border:1px solid var(--border2);padding:5px 10px;font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--text);line-height:1.65;z-index:200;display:none;white-space:nowrap;}
@@ -9606,19 +9606,11 @@ function updatePinTimers(){
     if(!pinG) return;
     const ring = pinG.querySelector(".pin-countdown");
     if(!ring) return;
-    let pct = 0;
-    if(i.status==="Pending"){
-      if(i.pendingWindow >= 999){ pct = 0; } // scripted anchors: no countdown
-      else { pct = Math.min(1, (G.minute - i.occurMin) / i.pendingWindow); }
-    } else if(i.status==="Traveling" && i._travelMs){
-      pct = Math.min(1, 1 - i.timerMs / i._travelMs);
-    } else if(i.status==="OnScene" && i.onSceneMs){
-      pct = Math.min(1, 1 - i.timerMs / i.onSceneMs);
-    } else if(i.status==="Limbo" && i._darkRunning && i.onSceneMs){
-      pct = Math.min(1, 1 - i.timerMs / i.onSceneMs); // dark: same as onScene
-    } else if(i.status==="Limbo" && !i._darkRunning && i._limboTotalMs){
-      pct = Math.min(1, 1 - i.limboMs / i._limboTotalMs); // staged: limbo countdown
-    }
+    // Only show ring while unresponded pending with a real timeout
+    const active = i.status==="Pending" && i.pendingWindow < 999 && i.assignedUnits.length===0;
+    if(!active){ ring.style.opacity="0"; return; }
+    ring.style.opacity="1";
+    const pct = Math.min(1, (G.minute - i.occurMin) / i.pendingWindow);
     const col = pct >= 0.85 ? "#c83838" : pct >= 0.6 ? "#d07018" : "#22c55e";
     const r = parseFloat(ring.getAttribute("r"));
     const circ = 2 * Math.PI * r;
