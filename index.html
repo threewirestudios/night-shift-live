@@ -472,6 +472,23 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .settings-row-sub{font-size:9px;color:var(--text3);margin-top:1px;}
 .settings-toggle{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:5px 16px;cursor:pointer;transition:all .15s;min-width:50px;text-align:center;}
 .settings-toggle.on{border-color:var(--amber);color:var(--amber);}
+.stab-bar{display:flex;gap:0;border-bottom:1px solid var(--border2);margin:-2px -16px 18px;padding:0 16px;}
+.stab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:8px 14px 7px;cursor:pointer;text-transform:uppercase;transition:all .15s;margin-bottom:-1px;}
+.stab-btn:hover{color:var(--text2);}
+.stab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
+.stab-panel{display:none;}
+.stab-panel.active{display:block;}
+.trust-tbl{width:100%;border-collapse:collapse;margin-top:8px;}
+.trust-tbl th{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);text-align:left;padding:5px 6px;border-bottom:1px solid var(--border2);}
+.trust-tbl th:last-child{text-align:right;}
+.trust-tbl td{padding:5px 6px;font-size:9.5px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.04);}
+.trust-tbl td:last-child{text-align:right;font-family:'Share Tech Mono',monospace;white-space:nowrap;}
+.trust-tbl tr:last-child td{border-bottom:none;}
+.trust-tbl .tpos{color:var(--green);}
+.trust-tbl .tneg{color:var(--red);}
+.trust-tbl .tzro{color:var(--text3);}
+.trust-tbl .tsep td{border-top:1px solid var(--border2);padding-top:8px;}
+
 /* POSITION PICKER */
 .pos-picker-wrap{margin-top:10px;display:flex;align-items:center;gap:18px;}
 .pos-screen{position:relative;width:126px;height:80px;border:1.5px solid var(--border2);background:var(--bg2);flex-shrink:0;}
@@ -10093,6 +10110,12 @@ function applySettings(){
 }
 function openSettings(){ document.getElementById('settings-modal').classList.add('open'); applySettings(); }
 function closeSettings(){ document.getElementById('settings-modal').classList.remove('open'); }
+function switchSettingsTab(tab){
+  document.querySelectorAll('.stab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.stab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('stab-'+tab).classList.add('active');
+  document.querySelector('[data-stab="'+tab+'"]').classList.add('active');
+}
 document.addEventListener('DOMContentLoaded', applySettings);
 
 // ── UTILS ─────────────────────────────────────────────
@@ -10131,10 +10154,15 @@ document.addEventListener("keydown", function(e) {
 <div id="settings-modal">
   <div class="settings-panel">
     <div class="settings-hdr">
-      <span class="settings-hdr-title">Settings</span>
+      <span class="settings-hdr-title">Settings &amp; Overview</span>
       <button class="settings-close" onclick="closeSettings()">✕</button>
     </div>
     <div class="settings-body">
+      <div class="stab-bar">
+        <button class="stab-btn active" data-stab="settings" onclick="switchSettingsTab('settings')">Settings</button>
+        <button class="stab-btn" data-stab="overview" onclick="switchSettingsTab('overview')">Overview</button>
+      </div>
+      <div id="stab-settings" class="stab-panel active">
 
       <!-- Gameplay -->
       <div class="settings-section">
@@ -10191,6 +10219,36 @@ document.addEventListener("keydown", function(e) {
           <div class="pos-hint">Click a position on the screen diagram to move where critical alerts appear. Default: top-center.</div>
         </div>
       </div>
+
+      </div><!-- /stab-settings -->
+
+      <div id="stab-overview" class="stab-panel">
+
+        <div class="settings-section">
+          <div class="settings-section-title">Community Trust</div>
+          <p style="font-size:10px;color:var(--text2);line-height:1.65;margin:0 0 14px;">Trust measures public confidence in your dispatch operation. It is your primary performance metric &mdash; each shift is graded on it at debrief. Effective responses build trust; failed calls, ignored incidents, and poor decisions erode it. Starting trust: 80% (12 of 15).</p>
+          <table class="trust-tbl">
+            <thead><tr><th>Event</th><th>Change</th></tr></thead>
+            <tbody>
+              <tr><td>SEV 1 Resolved</td><td class="tpos">+0.5</td></tr>
+              <tr><td>SEV 2 Resolved</td><td class="tpos">+1</td></tr>
+              <tr><td>SEV 3 Resolved</td><td class="tpos">+2</td></tr>
+              <tr class="tsep"><td>Incident Failed</td><td class="tneg">−1</td></tr>
+              <tr><td>Forced Entry &mdash; Scene Unsecured</td><td class="tneg">−2</td></tr>
+              <tr class="tsep"><td>Timeout &mdash; SEV 1 or 2</td><td class="tneg">−1</td></tr>
+              <tr><td>Timeout &mdash; SEV 3</td><td class="tneg">−2</td></tr>
+              <tr class="tsep"><td>Declined / Recalled / Withdrawn &mdash; SEV 1 or 2</td><td class="tneg">−0.5</td></tr>
+              <tr><td>Declined / Recalled / Withdrawn &mdash; SEV 3</td><td class="tneg">−1</td></tr>
+              <tr><td>Smart Triage Recall ①</td><td class="tzro">0</td></tr>
+              <tr class="tsep"><td>Unit Lost in Action</td><td class="tneg">−1</td></tr>
+              <tr><td>Scripted Narrative Event</td><td class="tzro">0</td></tr>
+              <tr class="tsep"><td>Night Completion (clean shift)</td><td class="tpos">Night # × 0.25</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:8.5px;color:var(--text3);margin:10px 0 0;line-height:1.6;">① Smart Triage: unit recalled while all channels are full, and a higher-priority response is dispatched within 20 seconds.</p>
+        </div>
+
+      </div><!-- /stab-overview -->
 
     </div>
   </div>
