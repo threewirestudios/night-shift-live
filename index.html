@@ -6763,8 +6763,11 @@ function doRecontact() {
       const stillLive = G.incidents.find(x => x.id === i.id);
       if(stillLive){
         stillLive.failChance = Math.max(0, (stillLive.failChance||0.1) - 0.06);
-        stillLive._darkRunning = false; // unit is back — exitLimbo normally
-        exitLimbo(stillLive);
+        stillLive._darkRunning = false;
+        stillLive.status = "OnScene"; // restore without resetting timerMs — incident was already running
+        stillLive.limboType = null;
+        stillLive.assignedUnits.forEach(uid=>{ const uu=G.units.find(x=>x.id===uid); if(uu) uu.status="OnScene"; });
+        renderQueue(); renderUnits();
         document.getElementById("m-situation-result").textContent = u+" responded. Comms restored.";
       } else {
         // Incident already resolved while we were waiting — just fire the comm
