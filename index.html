@@ -113,7 +113,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .queue-list{flex:1;overflow-x:auto;overflow-y:hidden;padding:5px 6px;display:flex;flex-direction:row;gap:6px;align-items:stretch;}
 .queue-list::-webkit-scrollbar{height:3px;}
 .queue-list::-webkit-scrollbar-thumb{background:var(--border2);}
-.queue-item{flex:0 0 auto;width:200px;padding:6px 8px;background:var(--panel);border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:background .15s,opacity .15s;}
+.queue-item{flex:0 0 auto;width:200px;padding:6px 8px;background:var(--panel);border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:background .15s,opacity .15s;position:relative;}
 .queue-item:hover{border-color:var(--amber);background:var(--panel2);}
 .queue-item.qi-urgent:hover,.queue-item.qi-dark:hover,.queue-item.qi-staged:hover,.queue-item.limbo-state:hover{animation:none;}
 .queue-item.limbo-state{border-color:var(--limbo);animation:lborder 1.4s infinite;}
@@ -194,11 +194,12 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 #comms-feed.filter-critical .comm-line:not(.system):not(.narrative):not(.alert){display:none;}
 #comms-feed.filter-dispatch .comm-line:not(.system):not(.narrative):not(.dispatch):not(.success){display:none;}
 #comms-feed.filter-field .comm-line:not(.system):not(.narrative):not(.unit):not(.caller){display:none;}
-.qi-defer{float:right;margin-top:3px;padding:2px 7px;background:transparent;border:1px solid var(--text3);color:var(--text3);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-defer{padding:2px 7px;background:transparent;border:1px solid var(--text3);color:var(--text3);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
 .qi-defer:hover{background:rgba(140,160,140,.12);border-color:var(--text2);color:var(--text2);}
-.qi-qdecline{float:right;margin:3px 4px 0 0;padding:2px 7px;background:transparent;border:1px solid rgba(200,60,60,.5);color:rgba(200,60,60,.7);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-qdecline{padding:2px 7px;background:transparent;border:1px solid rgba(200,60,60,.5);color:rgba(200,60,60,.7);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
 .qi-qdecline:hover{background:rgba(200,40,40,.12);border-color:var(--red);color:var(--red);}
 .qi-qdecline.qi-confirming{background:rgba(200,40,40,.18);border-color:var(--red);color:var(--red);}
+.qi-pending-actions{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:3px;align-items:flex-end;}
 .qi-recall{float:right;margin-top:3px;padding:2px 8px;background:transparent;border:1px solid var(--amber);
   color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;border-radius:2px;
   letter-spacing:1px;}
@@ -8588,13 +8589,13 @@ function renderQueue(){
       const qTagLabel = i.isCleanseMission?'CLEANSE':i.isDefendMission?'DEFEND':i.isFortifyMission?'FORTIFY':(i.family==='Infrastructure'?'INFRA':i.family.toUpperCase());
       return `
         <div class="queue-item ${ld.cls} ${qItemClass} ${i.critFired&&i.status==="Pending"?"qi-urgent":""}"
-             onclick="openModal('${i.id}')">
+             onclick="openModal('${i.id}')"${showPendingActions?' style="padding-right:52px"':''}>
           <div class="qi-r1">
             <span class="qi-ftag ${qTag}">${qTagLabel}</span>
             <span class="qi-title">${i.title}</span>
             <span style="font-size:9px;color:var(--${sevColor})">${sevLabel}</span>
             <button class="qi-comms-link" onclick="event.stopPropagation();scrollToIncComms('${i.id}')" title="Scroll to comms">◉</button>
-            ${recallBtn}${pendingActions}
+            ${recallBtn}
           </div>
           <div class="qi-r2">
             <span>${i.district} · ${i.assignedUnits.length>0?i.assignedUnits.join(", "):"Unassigned"}</span>
@@ -8602,6 +8603,7 @@ function renderQueue(){
           </div>
           ${hoverDetail}
           ${timerBar}
+          ${showPendingActions?`<div class="qi-pending-actions">${pendingActions}</div>`:""}
         </div>`;
     }).join("");
   const responding = active.filter(i=>i.status!=="Pending").length;
