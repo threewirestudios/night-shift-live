@@ -205,6 +205,11 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .qi-staged-push:hover{background:rgba(200,140,20,.15);border-color:var(--amber);}
 .qi-staged-caution{padding:2px 6px;background:transparent;border:1px solid var(--text3);color:var(--text3);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
 .qi-staged-caution:hover{background:rgba(140,160,140,.12);border-color:var(--text2);color:var(--text2);}
+.qi-mission-btn{padding:2px 6px;background:transparent;border:1px solid rgba(34,197,94,.45);color:#22c55e;font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-mission-btn:hover{background:rgba(34,197,94,.12);border-color:#22c55e;}
+.qi-mission-withdraw{padding:2px 6px;background:transparent;border:1px solid rgba(200,56,56,.45);color:var(--red);font-size:9px;cursor:pointer;border-radius:2px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.qi-mission-withdraw:hover{background:rgba(200,56,56,.12);border-color:var(--red);}
+.qi-mission-withdraw.qi-confirming{background:rgba(200,40,40,.18);border-color:var(--red);color:var(--red);}
 .qi-pending-actions{position:absolute;top:4px;right:4px;display:flex;flex-direction:column;gap:3px;align-items:flex-end;}
 .qi-recall{float:right;margin-top:3px;padding:2px 8px;background:transparent;border:1px solid var(--amber);
   color:var(--amber);font-family:'IBM Plex Mono',monospace;font-size:9px;cursor:pointer;border-radius:2px;
@@ -522,7 +527,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.95</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.96</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -7197,6 +7202,121 @@ function queueStagedCaution(incId){
   setTimeout(()=>{ if(i.status==="Limbo") exitLimbo(i, 0.9); }, 1800);
   renderQueue();
 }
+function queueMissionReinforce(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="OnScene") return;
+  if(!i.isDefendMission && !i.isCleanseMission && !i.isFortifyMission) return;
+  const eligible = G.units.filter(x=>
+    x.status==="Available" && !i.assignedUnits.includes(x.id) &&
+    (i.isCleanseMission||i.isFortifyMission||i.allowedUnits.includes(x.type))
+  ).sort((a,b)=>((b.fatigue??30)-(a.fatigue??30)));
+  const backup = eligible[0];
+  if(!backup){ notif("No unit available to reinforce","amber"); return; }
+  const u = i.assignedUnits[0]||"Unit";
+  const isStrategicOp = i.isCleanseMission||i.isFortifyMission;
+  const backupIsSpecialist = backup.isSuppressor||backup.isEvolved||backup.id===(CARRY.evolvedPoliceUnit||"")||backup.id===(CARRY.evolvedEMSUnit||"");
+  const needsChannel = isStrategicOp && !backupIsSpecialist;
+  if(needsChannel){
+    G.threadsUsed=G.incidents.filter(x=>x.status==="Traveling"||x.status==="OnScene"||x.status==="Limbo").reduce((s,x)=>s+(x.threadSlots??1),0);
+    if(G.threadsUsed>=G.threadsMax){ notif("All comm channels in use","amber"); return; }
+    G.threadsUsed++; i.threadSlots=(i.threadSlots||0)+1;
+  }
+  backup.status="Traveling"; backup.assignedTo=i.id;
+  i.assignedUnits.push(backup.id);
+  i.failChance=Math.max(0.05,i.failChance-0.18);
+  i._reinforced=true; i._playerActed=true;
+  comm("dispatch","Dispatch: "+backup.id+" — reinforce position at "+i.district+". Support "+u+".");
+  addUnitMarker(i.id,backup.id,backup.type,rng(20,40)*1000);
+  notif(backup.id+" en route to reinforce","green");
+  renderQueue(); renderUnits(); topBar();
+}
+function queueMissionWithdraw(incId){
+  if(G._missionWithdrawConfirm===incId){
+    G._missionWithdrawConfirm=null;
+    clearTimeout(G._missionWithdrawTimer);
+    doMissionWithdraw(incId);
+  } else {
+    G._missionWithdrawConfirm=incId;
+    renderQueue();
+    G._missionWithdrawTimer=setTimeout(()=>{ G._missionWithdrawConfirm=null; renderQueue(); },2500);
+  }
+}
+function doMissionWithdraw(incId){
+  const i = G.incidents.find(x=>x.id===incId);
+  if(!i || i.status!=="OnScene") return;
+  const releaseUnits=()=>{
+    i.assignedUnits.forEach(uid=>{
+      const u=G.units.find(x=>x.id===uid);
+      if(u && u.status!=="Dead"){ u.status="Available"; u.assignedTo=null; }
+    });
+  };
+  if(i.isDefendMission){
+    comm("alert","⧡ DEFEND WITHDRAWN — "+i.district.toUpperCase()+" — Position abandoned.");
+    releaseUnits();
+    G.legit=Math.max(0,G.legit-1); // standard fail delta
+    G.failedCt++; checkFired();
+    removePin(i.id); removeUnitMarkers(i.id);
+    G.incidents=G.incidents.filter(x=>x.id!==incId);
+    setTimeout(()=>{
+      if(i.district==="Civic Core"){
+        comm("alert","⚠ CIVIC CORE PERIMETER LOST — EMERGENCY OPERATIONS TERMINATED.");
+        setTimeout(()=>{ G.legit=0; checkFired(); },2000);
+      } else if(i.district===CARRY.hqDistrict && G.night>=5){
+        comm("alert","⚠ HQ PERIMETER LOST — COMMAND POST OVERRUN. ALL UNITS STAND DOWN.");
+        setTimeout(()=>{ G.legit=0; checkFired(); },2500);
+      } else {
+        markDistrictLost(i.district);
+      }
+    },1000);
+  } else if(i.isCleanseMission){
+    comm("alert","⧡ CLEANSE WITHDRAWN — "+i.district.toUpperCase()+" — Operation aborted.");
+    notif("Cleanse withdrawn — "+i.district+" remains lost","red");
+    releaseUnits();
+    G.failedCt++;
+    removePin(i.id); removeUnitMarkers(i.id);
+    G.incidents=G.incidents.filter(x=>x.id!==incId);
+  } else if(i.isFortifyMission){
+    comm("alert","⧡ FORTIFY WITHDRAWN — "+i.district.toUpperCase()+" — Marshal standing down.");
+    releaseUnits();
+    const activeCollection=G.incidents.find(x=>x.isCollectionMission&&x.district===i._fortifyDistrict&&x.status==="OnScene");
+    G.incidents=G.incidents.filter(x=>x.id!==incId);
+    removePin(i.id); removeUnitMarkers(i.id);
+    if(activeCollection){
+      setTimeout(()=>{
+        const specialist=G.units.find(u=>u.id===(CARRY.evolvedEMSUnit||""));
+        const survives=Math.random()>0.5;
+        if(survives){
+          comm("alert","⚠ FORTIFY DROPPED — "+i._fortifyDistrict.toUpperCase()+" — Collection unit exposed. Specialist retreating under fire.");
+          notif("Specialist retreated — collection aborted","amber");
+        } else {
+          comm("alert","✘ FORTIFY DROPPED — "+i._fortifyDistrict.toUpperCase()+" — Collection unit lost contact. Specialist KIA.");
+          notif("Specialist lost","red");
+          if(specialist){ specialist.status="Dead"; specialist.assignedTo=null; }
+        }
+        activeCollection.status="Failed"; activeCollection.failedAt=G.minute;
+        activeCollection.assignedUnits.forEach(uid=>{
+          const u=G.units.find(u=>u.id===uid);
+          if(u && u.status!=="Dead"){ u.status="Available"; u.assignedTo=null; }
+        });
+        if(!CARRY.collectedDistricts) CARRY.collectedDistricts=new Set();
+        CARRY.collectedDistricts.add(i._fortifyDistrict);
+        removePin(activeCollection.id); removeUnitMarkers(activeCollection.id);
+        renderQueue(); renderUnits();
+      },800);
+    }
+  } else if(i.isCollectionMission){
+    comm("alert","⧡ COLLECTION WITHDRAWN — "+i.district.toUpperCase()+" — Specialist standing down.");
+    notif("Collection aborted","amber");
+    releaseUnits();
+    G.legit=Math.max(0,G.legit+((i.failFx&&i.failFx.legit)||0));
+    G.failedCt++; checkFired();
+    if(!CARRY.collectedDistricts) CARRY.collectedDistricts=new Set();
+    CARRY.collectedDistricts.add(i._collectDistrict||i.district);
+    removePin(i.id); removeUnitMarkers(i.id);
+    G.incidents=G.incidents.filter(x=>x.id!==incId);
+  }
+  renderQueue(); renderUnits(); topBar();
+}
 function doQuickDecline(incId){
   const i = G.incidents.find(x=>x.id===incId);
   if(!i || i.status!=="Pending") return;
@@ -8687,8 +8807,18 @@ function renderQueue(){
         ? `<button class="qi-staged-push" onclick="event.stopPropagation();queueStagedPush('${i.id}')">Push</button>`
           + `<button class="qi-staged-caution" onclick="event.stopPropagation();queueStagedCaution('${i.id}')">Caution</button>`
         : "";
-      const showCardActions = showPendingActions || showDarkActions || showStagedActions;
-      const cardActions = pendingActions + darkActions + stagedActions;
+      // Mission card actions (defend/cleanse/fortify/collection) — OnScene only
+      const showMissionActions = _isMission && i.status==="OnScene";
+      const isWithdrawConfirm = G._missionWithdrawConfirm === i.id;
+      const canReinforce = (i.isDefendMission||i.isCleanseMission||i.isFortifyMission) &&
+        G.units.some(x=>x.status==="Available"&&!i.assignedUnits.includes(x.id)&&
+          (i.isCleanseMission||i.isFortifyMission||i.allowedUnits.includes(x.type)));
+      const missionActions = showMissionActions
+        ? (canReinforce?`<button class="qi-mission-btn" onclick="event.stopPropagation();queueMissionReinforce('${i.id}')">Reinforce</button>`:"")
+          + `<button class="qi-mission-withdraw${isWithdrawConfirm?" qi-confirming":""}" onclick="event.stopPropagation();queueMissionWithdraw('${i.id}')">${isWithdrawConfirm?"Confirm?":"Withdraw"}</button>`
+        : "";
+      const showCardActions = showPendingActions || showDarkActions || showStagedActions || showMissionActions;
+      const cardActions = pendingActions + darkActions + stagedActions + missionActions;
       // Spawn-dark incident — show masked card
       if(i.isSpawnDark) {
         return `
