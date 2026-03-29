@@ -4804,7 +4804,8 @@ let CARRY = {
 function initState(night){
   const n = night || 1;
   // Refresh units — restore fatigue but keep any permanent losses
-  const freshUnits = buildUnits().filter(u => u.id !== CARRY.unitLost);
+  const _permLost = new Set([CARRY.unitLost, ...(CARRY.unitsLost||[])].filter(Boolean));
+  const freshUnits = buildUnits().filter(u => !_permLost.has(u.id));
   // Apply carry buff fatigue drain — some buffs cost energy at night start
   if(CARRY.buffs && CARRY.buffs.unitTypeBuff && CARRY.buffs.unitTypeBuff.fatigueMod) {
     const b = CARRY.buffs.unitTypeBuff;
@@ -5005,6 +5006,9 @@ function startNight(night){
   // Night 5: add Suppressor unit from airdrop (only once)
   if(night === 5 && !CARRY._suppressorAdded) {
     CARRY._suppressorAdded = true;
+    if(!CARRY.extraRoster) CARRY.extraRoster = [];
+    if(!CARRY.extraRoster.find(e=>e.id==="Fire3"))
+      CARRY.extraRoster.push({id:"Fire3", type:"Fire", name:"Suppressor", extraProps:{isSuppressor:true}});
     setTimeout(()=>{
       G.units.push({
         id:"Fire3", type:"Fire", name:"Suppressor", status:"Available", posture:"Cautious",
@@ -5021,6 +5025,9 @@ function startNight(night){
     CARRY.giftedMarshal = false; // consume
     const existingPol = G.units.filter(u=>u.type==="Police").length;
     const marshalId = "Pol"+(existingPol+1);
+    if(!CARRY.extraRoster) CARRY.extraRoster = [];
+    if(!CARRY.extraRoster.find(e=>e.id===marshalId))
+      CARRY.extraRoster.push({id:marshalId, type:"Police", name:"Marshal", extraProps:{isEvolved:true}});
     G.units.push({
       id:marshalId, type:"Police", name:"Marshal", status:"Available", posture:"Cautious",
       readiness:"Green", condition:"Green", fatigue:30, assignedTo:null, callCount:0,
@@ -7830,7 +7837,8 @@ function applyExtraUnitFromCarry(){
       id:eu.id, type:eu.type, name:eu.name, status:"Available", posture:"Cautious",
       readiness: eu.rookie ? "Yellow" : "Green",
       condition:"Green", fatigue: eu.rookie ? 20 : 30, assignedTo:null, callCount:0,
-      xp: (CARRY.unitXP && CARRY.unitXP[eu.id]) || 0
+      xp: (CARRY.unitXP && CARRY.unitXP[eu.id]) || 0,
+      ...(eu.extraProps||{})
     });
   });
 }
@@ -8526,6 +8534,8 @@ function doSewerOverride() {
       lostUnit.status = "Lost";
       lostUnit.assignedTo = null;
       CARRY.unitLost = dispUnit;
+      if(!CARRY.unitsLost) CARRY.unitsLost = [];
+      if(!CARRY.unitsLost.includes(dispUnit)) CARRY.unitsLost.push(dispUnit);
     }
     G.units = G.units.filter(u=>u.id!==dispUnit);
     G.threadsUsed = Math.max(0, G.threadsUsed - 1);
@@ -8637,7 +8647,9 @@ function doDocklandsSearch() {
         comm("narrative", "◈ We've lost control of Docklands. Not sure if anyone made it out. ◈");
         notif("Two units dark — Docklands sealed","red");
         const lostBackup = G.units.find(u=>u.id===backup.id);
-        if(lostBackup){ G.units = G.units.filter(u=>u.id!==backup.id); CARRY.unitLost = backup.id; }
+        if(lostBackup){ G.units = G.units.filter(u=>u.id!==backup.id); CARRY.unitLost = backup.id;
+          if(!CARRY.unitsLost) CARRY.unitsLost = [];
+          if(!CARRY.unitsLost.includes(backup.id)) CARRY.unitsLost.push(backup.id); }
         _docklandsClose(i, false, "both_lost");
       }, 4000);
     }
