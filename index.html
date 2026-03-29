@@ -651,11 +651,11 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
             <option value="cutscene-4">N4→5: Cutscene ★ (Airdrop)</option>
             <option value="cutscene-5">N5→6: Cutscene → Briefing ★</option>
             <option value="cutscene-6">N6→7: Cutscene ★ (Momentum)</option>
-            <option value="cutscene-7">N7→8: Sleep screen</option>
+            <option value="coming-soon">N7+: Coming Soon screen</option>
           </optgroup>
           <optgroup label="PRE-SHIFT BRIEFING">
+            <option value="briefing-6">Night 6: Operational Briefing</option>
             <option value="briefing-7">Night 7: Operational Briefing</option>
-            <option value="briefing-8">Night 8: Operational Briefing</option>
           </optgroup>
           <optgroup label="IN-GAME EVENTS">
             <option value="event-hqevac">N5: HQ Evacuation Modal ★</option>
@@ -8299,7 +8299,7 @@ function showOpBriefing(nextNight) {
   document.getElementById("opbrief-choice-val").textContent = lastChoice ? lastChoice.l : "—";
 
   // ── TITLE ──
-  const nightNames = {7:"SEVEN",8:"EIGHT",9:"NINE",10:"TEN",11:"ELEVEN",12:"TWELVE",13:"THIRTEEN",14:"FOURTEEN"};
+  const nightNames = {6:"SIX",7:"SEVEN",8:"EIGHT",9:"NINE",10:"TEN",11:"ELEVEN",12:"TWELVE",13:"THIRTEEN",14:"FOURTEEN"};
   document.getElementById("opbrief-title").textContent = "NIGHT "+(nightNames[nextNight]||nextNight)+" — OPERATIONAL BRIEFING";
 
   // ── SUPERVISOR — trust-tiered ──
@@ -9278,6 +9278,10 @@ function devPreviewScreen(){
     devPreviewCutscene(parseInt(val.split("-")[1]));
   } else if(val.startsWith("briefing-")){
     devPreviewBriefing(parseInt(val.split("-")[1]));
+  } else if(val === "coming-soon"){
+    document.getElementById("dev-panel").style.display = "none";
+    document.getElementById("title-screen").classList.remove("active");
+    showComingSoon();
   } else if(val === "event-hqevac"){
     document.getElementById("dev-panel").style.display = "none";
     showHQEvacModal();
