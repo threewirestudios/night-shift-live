@@ -337,6 +337,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
 .btn-choice.choice-locked:hover{border-color:var(--border2);border-left-color:var(--border2);background:rgba(255,255,255,.02);}
 .btn-choice.choice-locked::after{content:attr(data-tooltip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(14,16,24,.97);color:var(--amber);font-size:10px;font-family:'Share Tech Mono',monospace;padding:6px 14px;border-radius:3px;border:1px solid var(--amber);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:200;}
 .btn-choice.choice-locked:hover::after{opacity:1;}
+.btn-choice.upgrade-choice{border-left-color:var(--cyan);}.btn-choice.upgrade-choice strong{color:var(--cyan);}.btn-choice.upgrade-choice:hover{border-color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,200,230,.04);}.btn-choice.upgrade-choice.selected-choice{border-left-color:var(--green);border-color:var(--green);background:rgba(48,180,80,.08);}#confirm-choices-btn{border-color:var(--green);color:var(--green);margin-top:6px;}#confirm-choices-btn:hover{background:rgba(48,180,80,.08);}
 .db-casefile-stamp{font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;letter-spacing:6px;color:rgba(200,56,56,.25);border:3px solid rgba(200,56,56,.2);display:inline-block;padding:6px 18px;transform:rotate(-2deg);margin:20px 0;text-transform:uppercase;}
 
 /* HQ EVAC MODAL */
@@ -6223,8 +6224,8 @@ function resolve(i){
       }
       if(CARRY.buffs&&CARRY.buffs.unitTypeBuff){const b=CARRY.buffs.unitTypeBuff;if(b.type==="all"||b.type===u.type) drainFatigue=Math.max(0,drainFatigue+(b.fatigueMod||0));}
       u.fatigue=Math.max(0,(u.fatigue||30)-drainFatigue);u.readiness=u.fatigue<=8?"Red":u.fatigue<=14?"Yellow":"Green";
-      // XP tracking — silent until Night 7 UI
-      if(!failed && !i.isDefendMission) {
+      // XP tracking — earns from Night 5 onward
+      if(!failed && !i.isDefendMission && G.night >= 5) {
         const xpGain = i.severity >= 3 ? 3 : i.severity >= 2 ? 2 : 1;
         u.xp = (u.xp || 0) + xpGain;
         if(!CARRY.unitXP) CARRY.unitXP = {};
@@ -7611,138 +7612,93 @@ function buildNightChoices(night, nextNight) {
     return choices;
   }
 
-  // ── NIGHT 7: EMS evolution + standard choices ──
-  if(night === 7) {
-    const n7 = [];
-    const emsReady = G.units.find(u=>u.type==="EMS"&&!u.isEvolved&&!u.isSuppressor&&u.id!==(CARRY.evolvedEMSUnit||"")&&(u.xp||0)>=10);
-    if(emsReady && !CARRY.evolvedEMS) {
-      n7.push({
-        k:"EVO", icon:"⚡",
-        l:"Evolve EMS Unit — Specialist Protocol",
-        sub:"Evolution / EMS",
-        d:emsReady.id+" has the hours in. Specialist certification unlocks collection operations — gathering the samples the research teams need to start making sense of this. It's the next step toward actually ending it.",
-        cost:"Evolution is permanent. Specialists take on a different kind of assignment.",
-        buff:{type:"evolveEMS", unitId:emsReady.id}
-      });
-    } else {
-      n7.push({
-        k:"EVO", icon:"🚑",
-        l:"Mutual Aid — Additional EMS Unit",
-        sub:"Staffing / EMS",
-        d:"An EMS unit from outside the perimeter has been cleared to enter. The research teams need a Specialist on your roster — this unit joins and starts building toward that threshold.",
+  // ── NIGHT 7+: Unified upgrade + standard choice system ──
+  if(night >= 7) {
+    const upgradable = _getUpgradableUnits();
+    const upgradeSlots = upgradable.slice(0,2).map(u=>{
+      const tier = getUnitEvolutionTier(u);
+      const tierData = EVOLUTION_TIERS[u.type];
+      const toTier = tierData[tier];
+      const typeDesc = {
+        Fire:        tier===1 ? "Field promotion to Suppressor — unlocks Cleanse operations, reclaiming lost districts one by one."
+                               : "Advanced to Exterminator — enhanced district reclaim and suppression capabilities.",
+        Police:      tier===1 ? "Upgrade to Marshal — unlocks Fortify operations, holding districts and enabling specimen collection."
+                               : "Advanced to Guardian — extended field operations and expanded tactical support.",
+        EMS:         tier===1 ? "Specialist certification — unlocks Collection operations, extracting specimens the research teams need."
+                               : "Bio-Agent upgrade — advanced sampling and biological analysis operations.",
+        PublicWorks: tier===1 ? "Engineer certification — unlocks Augment operations, improving comms and incident outcomes within a district."
+                               : "Ironhand upgrade — infrastructure repair including comms hub restoration."
+      };
+      return {
+        k:"EVO_"+u.id, isUpgrade:true, unitId:u.id, icon:"⚡",
+        l:u.name+" → "+toTier.name,
+        sub:"Evolution / "+(u.type==="PublicWorks"?"Public Works":u.type),
+        d:typeDesc[u.type]||"Unit upgrade — unlocks new capabilities.",
+        cost:"Permanent — unit operates under the new protocol from here on.",
+        buff:{type:"evolveUnit", unitId:u.id}
+      };
+    });
+
+    // Standard slots: fill remaining (3 - upgrade count) from priority pool
+    const _remainSlots = 3 - upgradeSlots.length;
+    const _stdPool = [];
+    const _unitLostThisNight = !!(CARRY.unitLost || (CARRY.unitsLost && CARRY.unitsLost.length > 0));
+
+    // Staffing slot: unit add (priority if loss occurred) or channel
+    if(_unitLostThisNight && G.units.length < 10){
+      const _ut=_suggestUnitType();
+      _stdPool.push({k:"C",icon:"👥",l:"Request Additional "+_ut+" Unit",sub:"Staffing / Unit",
+        d:"A "+_ut+" unit joins for Night "+nextNight+". Partially offsets recent losses.",
         cost:"Mutual aid unit starts as Rookie — slightly higher fail rate until they learn Crown Harbor.",
-        buff:{type:"addUnit", unitType:"EMS", rookieDebuff:true}
-      });
+        buff:{type:"addUnit",unitType:_ut,rookieDebuff:true}});
+    } else if(G.threadsMax < 5){
+      _stdPool.push({k:"C",icon:"📡",l:"Request Additional Dispatcher",sub:"Staffing / Capacity",
+        d:"Adds one comm channel — handle one more active call simultaneously.",cost:null,buff:{type:"channel"}});
+    } else if(G.units.length < 10){
+      const _ut=_suggestUnitType();
+      _stdPool.push({k:"C",icon:"👥",l:"Request Additional "+_ut+" Unit",sub:"Staffing / Unit",
+        d:"A "+_ut+" unit from a neighboring jurisdiction joins for Night "+nextNight+".",
+        cost:"Mutual aid unit starts as Rookie — slightly higher fail rate until they learn Crown Harbor.",
+        buff:{type:"addUnit",unitType:_ut,rookieDebuff:true}});
     }
-    const n7sc = [
-      {k:"A",icon:"⚡",l:"Authorize Rapid Deployment Protocol",sub:"Operations / Speed",d:"All units respond 20% faster next shift — travel times reduced across the board.",cost:"Units start Night "+nextNight+" at Yellow readiness — the shift begins tired.",buff:{type:"responseTime",mult:0.80,unitType:"all",fatigueMod:2}},
-      {k:"A",icon:"🚒",l:"Fire Department Priority Routing",sub:"Operations / Fire",d:"Fire units respond 25% faster and are less likely to stage on complex calls.",cost:"Fire units carry +2 fatigue from pre-positioning.",buff:{type:"unitBuff",unitType:"Fire",failMod:-0.06,limboMod:-0.05,fatigueMod:2}},
-      {k:"A",icon:"🚑",l:"EMS Protocol Upgrade",sub:"Operations / Medical",d:"EMS units have a higher floor on medical call outcomes. Fewer failed responses.",cost:"EMS units carry +2 fatigue from the training run.",buff:{type:"unitBuff",unitType:"EMS",failMod:-0.08,limboMod:-0.04,fatigueMod:2}},
-      {k:"A",icon:"🚔",l:"Police Tactical Briefing",sub:"Operations / Police",d:"Police units are less likely to stage or go dark on violence and unclear calls.",cost:"Police units carry +2 fatigue from the extended briefing.",buff:{type:"unitBuff",unitType:"Police",failMod:-0.05,limboMod:-0.07,fatigueMod:2}},
+
+    // Performance buff slot (most stressed unit type)
+    const _perfOpts = [
+      {k:"A",icon:"⚡",l:"Authorize Rapid Deployment Protocol",sub:"Operations / Speed",
+        d:"All units respond 20% faster next shift — travel times reduced across the board.",
+        cost:"Units start Night "+nextNight+" at Yellow readiness — the shift begins tired.",
+        buff:{type:"responseTime",mult:0.80,unitType:"all",fatigueMod:2}},
+      {k:"A",icon:"🚒",l:"Fire Department Priority Routing",sub:"Operations / Fire",
+        d:"Fire units respond 25% faster and are less likely to stage on complex calls.",
+        cost:"Fire units carry +2 fatigue from pre-positioning.",
+        buff:{type:"unitBuff",unitType:"Fire",failMod:-0.06,limboMod:-0.05,fatigueMod:2}},
+      {k:"A",icon:"🚑",l:"EMS Protocol Upgrade",sub:"Operations / Medical",
+        d:"EMS units have a higher floor on medical call outcomes. Fewer failed responses.",
+        cost:"EMS units carry +2 fatigue from the training run.",
+        buff:{type:"unitBuff",unitType:"EMS",failMod:-0.08,limboMod:-0.04,fatigueMod:2}},
+      {k:"A",icon:"🚔",l:"Police Tactical Briefing",sub:"Operations / Police",
+        d:"Police units are less likely to stage or go dark on violence and unclear calls.",
+        cost:"Police units carry +2 fatigue from the extended briefing.",
+        buff:{type:"unitBuff",unitType:"Police",failMod:-0.05,limboMod:-0.07,fatigueMod:2}},
     ];
-    const n7speed = n7sc.find(c=>c.buff.unitType===_mostStressedUnitType()) || n7sc[0];
-    n7.unshift(n7speed);
-    if(G.threadsMax < 5) {
-      n7.push({k:"C",icon:"📡",l:"Request Additional Dispatcher",sub:"Staffing / Capacity",d:"Adds one comm channel — handle one more active call simultaneously.",cost:null,buff:{type:"channel"}});
-    } else if(G.units.length < 10) {
-      const ut = _suggestUnitType();
-      n7.push({k:"C",icon:"🚑",l:"Request Additional "+ut+" Unit",sub:"Staffing / Unit",d:"An additional "+ut+" unit joins your roster for Night "+nextNight+".",cost:null,buff:{type:"addUnit",unitType:ut}});
+    const _stressed = _mostStressedUnitType();
+    _stdPool.push(_perfOpts.find(c=>c.buff.unitType===_stressed)||_perfOpts[0]);
+
+    // Second staffing slot (if room remains)
+    if(G.units.length < 10){
+      const _ut2=_suggestUnitType2();
+      _stdPool.push({k:"B",icon:"👥",l:"Request Additional "+_ut2+" Unit",sub:"Staffing / Unit",
+        d:"A "+_ut2+" unit from a neighboring jurisdiction joins for Night "+nextNight+".",
+        cost:"Mutual aid unit starts as Rookie.",
+        buff:{type:"addUnit",unitType:_ut2,rookieDebuff:true}});
+    } else {
+      _stdPool.push({k:"B",icon:"🎓",l:"Cross-Training: "+_suggestUnitType()+" Specialist",sub:"Training / Capability",
+        d:"All "+_suggestUnitType()+" units get a cross-training session — reduced fail chance on complex calls.",
+        cost:null,buff:{type:"unitBuff",unitType:_suggestUnitType(),failMod:-0.06,limboMod:-0.04,fatigueMod:0}});
     }
-    return n7;
+
+    return [...upgradeSlots, ..._stdPool.slice(0, _remainSlots)];
   }
-
-  const choices = [];
-  const canAddChannel = G.threadsMax < 5;
-  const canAddUnit = G.units.length < 10;
-
-  // ── LANE A: Comm Channel or Unit Add (if capped) ──
-  if(canAddChannel){
-    choices.push({
-      k:"C", icon:"📡",
-      l:"Request Additional Dispatcher",
-      sub:"Staffing / Capacity",
-      d:"Adds one comm channel — handle one more active call simultaneously.",
-      cost: null,
-      buff:{type:"channel"}
-    });
-  } else {
-    // Channel capped — offer unit instead
-    const unitType = _suggestUnitType();
-    choices.push({
-      k:"C", icon:"🚑",
-      l:"Request Additional "+unitType+" Unit",
-      sub:"Staffing / Unit",
-      d:"An additional "+unitType+" unit joins your roster for Night "+nextNight+".",
-      cost: null,
-      buff:{type:"addUnit", unitType}
-    });
-  }
-
-  // ── LANE A: Response Speed Buff ──
-  const speedChoices = [
-    {
-      k:"A", icon:"⚡",
-      l:"Authorize Rapid Deployment Protocol",
-      sub:"Operations / Speed",
-      d:"All units respond 20% faster next shift — travel times reduced across the board.",
-      cost:"Units start Night "+nextNight+" at Yellow readiness — the shift begins tired.",
-      buff:{type:"responseTime", mult:0.80, unitType:"all", fatigueMod:2}
-    },
-    {
-      k:"A", icon:"🚒",
-      l:"Fire Department Priority Routing",
-      sub:"Operations / Fire",
-      d:"Fire units respond 25% faster and are less likely to stage on complex calls.",
-      cost:"Fire units carry +2 fatigue into Night "+nextNight+" from pre-positioning.",
-      buff:{type:"unitBuff", unitType:"Fire", failMod:-0.06, limboMod:-0.05, fatigueMod:2}
-    },
-    {
-      k:"A", icon:"🚑",
-      l:"EMS Protocol Upgrade",
-      sub:"Operations / Medical",
-      d:"EMS units have a higher floor on medical call outcomes. Fewer failed responses.",
-      cost:"EMS units carry +2 fatigue from the training run.",
-      buff:{type:"unitBuff", unitType:"EMS", failMod:-0.08, limboMod:-0.04, fatigueMod:2}
-    },
-    {
-      k:"A", icon:"🚔",
-      l:"Police Tactical Briefing",
-      sub:"Operations / Police",
-      d:"Police units are less likely to stage or go dark on violence and unclear calls.",
-      cost:"Police units carry +2 fatigue from the extended briefing.",
-      buff:{type:"unitBuff", unitType:"Police", failMod:-0.05, limboMod:-0.07, fatigueMod:2}
-    },
-  ];
-  // Pick based on what was stressed this shift
-  const stressedType = _mostStressedUnitType();
-  const speedOpt = speedChoices.find(c=>c.buff.unitType===stressedType) || speedChoices[0];
-  choices.unshift(speedOpt); // A is always the performance buff
-
-  // ── LANE B: Unit Add or targeted buff ──
-  if(canAddUnit){
-    const unitType2 = _suggestUnitType2();
-    choices.push({
-      k:"B", icon:"👥",
-      l:"Mutual Aid — Additional "+unitType2+" Unit",
-      sub:"Staffing / Unit",
-      d:"A "+unitType2+" unit from a neighboring jurisdiction joins for Night "+nextNight+".",
-      cost:"Mutual aid unit starts as Rookie — slightly higher fail rate until they learn Crown Harbor.",
-      buff:{type:"addUnit", unitType:unitType2, rookieDebuff:true}
-    });
-  } else {
-    // Can't add units — offer cross-training buff
-    choices.push({
-      k:"B", icon:"🎓",
-      l:"Cross-Training: "+_suggestUnitType()+" Specialist",
-      sub:"Training / Capability",
-      d:"All "+_suggestUnitType()+" units get a cross-training session — reduced fail chance on complex calls.",
-      cost: null,
-      buff:{type:"unitBuff", unitType:_suggestUnitType(), failMod:-0.06, limboMod:-0.04, fatigueMod:0}
-    });
-  }
-
-  return choices;
-}
 
 function _mostStressedUnitType(){
   // Which unit type had the most failed/limbo incidents this shift?
@@ -7769,6 +7725,16 @@ function _suggestUnitType2(){
   G.units.forEach(u=>{ if(counts[u.type]!==undefined) counts[u.type]++; });
   const sorted = Object.entries(counts).sort((a,b)=>a[1]-b[1]);
   return sorted[1][0];
+}
+
+function _getUpgradableUnits(){
+  // Returns all units currently XP-eligible for evolution (L1→10 XP, L2→16 XP)
+  return G.units.filter(u=>{
+    const tier = getUnitEvolutionTier(u);
+    if(tier >= 3) return false;
+    const xp = (CARRY && CARRY.unitXP && CARRY.unitXP[u.id] != null) ? CARRY.unitXP[u.id] : (u.xp || 0);
+    return tier === 1 ? xp >= 10 : xp >= 16;
+  });
 }
 
 function applyChoiceBuff(choiceData){
@@ -7803,6 +7769,46 @@ function applyChoiceBuff(choiceData){
     CARRY.evolvedEMS = true;
     const emsUnit = (G.units||[]).find(u=>u.id===buff.unitId);
     if(emsUnit){ CARRY.evolvedEMSUnit = emsUnit.id; emsUnit.name = "Specialist"; emsUnit.isEvolved = true; }
+  } else if(buff.type==="evolveUnit"){
+    // General evolution handler — L1→L2 or L2→L3
+    const _eu = (G.units||[]).find(u=>u.id===buff.unitId);
+    if(_eu){
+      const _tier = getUnitEvolutionTier(_eu);
+      const _tierData = EVOLUTION_TIERS[_eu.type];
+      if(_tierData && _tier < 3){
+        const _toTier = _tierData[_tier]; // tier 1 → index 1 (L2 data), tier 2 → index 2 (L3 data)
+        _eu.name = _toTier.name;
+        _eu.isEvolved = true;
+        if(_tier === 1){
+          if(_eu.type==="Fire")    { _eu.isSuppressor = true; }
+          if(_eu.type==="Police")  { if(!CARRY.evolvedPolice){ CARRY.evolvedPolice=true; CARRY.evolvedPoliceUnit=_eu.id; } }
+          if(_eu.type==="EMS")     { if(!CARRY.evolvedEMS){ CARRY.evolvedEMS=true; CARRY.evolvedEMSUnit=_eu.id; } }
+          if(_eu.type==="PublicWorks"){ _eu.isEngineer=true; CARRY.evolvedPWUnit=_eu.id; }
+        } else {
+          _eu.isL3 = true;
+          if(_eu.type==="Fire")        { _eu.isExterminator=true; }
+          if(_eu.type==="Police")      { _eu.isGuardian=true; }
+          if(_eu.type==="EMS")         { _eu.isBioAgent=true; }
+          if(_eu.type==="PublicWorks") { _eu.isIronhand=true; }
+        }
+        // XP resets to 0 so L3 threshold is always 16 from this point
+        if(!CARRY.unitXP) CARRY.unitXP={};
+        CARRY.unitXP[_eu.id]=0; _eu.xp=0;
+        // Sync flags into extraRoster so save-loads preserve the evolution
+        if(CARRY.extraRoster){
+          const _er=CARRY.extraRoster.find(e=>e.id===_eu.id);
+          if(_er){
+            if(!_er.extraProps) _er.extraProps={};
+            _er.name=_toTier.name;
+            _er.extraProps.isEvolved=true;
+            if(_eu.isSuppressor) _er.extraProps.isSuppressor=true;
+            if(_eu.isEngineer)   _er.extraProps.isEngineer=true;
+            if(_eu.isL3)         _er.extraProps.isL3=true;
+          }
+        }
+        comm("system","Evolution confirmed — "+_eu.id+" promoted to "+_toTier.name+". Operating under new protocol from here on.");
+      }
+    }
   }
 }
 
@@ -8000,23 +8006,114 @@ function showDebrief(){
     radioCtx.innerHTML = `<span style="color:var(--cyan);font-size:9px;letter-spacing:1px">SUPERVISOR ·</span> "${radioLines[night]||"Before next shift — make a call."}"`;
 
     const choices = buildNightChoices(night, nextNight);
-    choicesEl.innerHTML=choices.map(c=> c.locked ? `
-      <div class="btn-choice choice-locked" data-tooltip="${c.lockedMsg}">
-        <strong>${c.icon}  ${c.l}</strong>
-        <span style="font-size:8px;letter-spacing:2px;color:var(--text3);display:block;margin-bottom:4px">${c.sub}</span>
-        <span style="color:var(--text2)">${c.d}</span>
-        ${c.cost ? `<span style="display:block;margin-top:4px;font-size:9px;color:var(--amber)">⚠ ${c.cost}</span>` : ''}
-      </div>` : `
-      <button class="btn-choice" onclick="selChoice('${c.k}')">
-        <strong>${c.icon}  ${c.l}</strong>
-        <span style="font-size:8px;letter-spacing:2px;color:var(--text3);display:block;margin-bottom:4px">${c.sub}</span>
-        <span style="color:var(--text2)">${c.d}</span>
-        ${c.cost ? `<span style="display:block;margin-top:4px;font-size:9px;color:var(--amber)">⚠ ${c.cost}</span>` : ''}
-      </button>`).join("");
+    const _hasUpgrades = choices.some(c=>c.isUpgrade);
+    _pendingChoiceKeys = new Set(); // reset each debrief
+    if(_hasUpgrades){
+      // Toggle mode: upgrade cards multi-selectable, standard cards single-select
+      choicesEl.innerHTML = choices.map(c=> c.locked ? `
+        <div class="btn-choice choice-locked" data-tooltip="${c.lockedMsg}">
+          <strong>${c.icon}  ${c.l}</strong>
+          <span style="font-size:8px;letter-spacing:2px;color:var(--text3);display:block;margin-bottom:4px">${c.sub}</span>
+          <span style="color:var(--text2)">${c.d}</span>
+          ${c.cost ? `<span style="display:block;margin-top:4px;font-size:9px;color:var(--amber)">⚠ ${c.cost}</span>` : ''}
+        </div>` : c.isUpgrade ? `
+        <button class="btn-choice upgrade-choice" id="choice-btn-${c.k.replace(/[^a-zA-Z0-9]/g,'_')}" onclick="toggleUpgradeChoice('${c.k}')">
+          <span style="font-size:8px;letter-spacing:2px;color:var(--cyan);display:block;margin-bottom:3px;">⚡ EVOLUTION AVAILABLE</span>
+          <strong>${c.icon}  ${c.l}</strong>
+          <span style="font-size:8px;letter-spacing:2px;color:var(--text3);display:block;margin-bottom:4px">${c.sub}</span>
+          <span style="color:var(--text2)">${c.d}</span>
+          ${c.cost ? `<span style="display:block;margin-top:4px;font-size:9px;color:var(--amber)">⚠ ${c.cost}</span>` : ''}
+        </button>` : `
+        <button class="btn-choice" id="choice-btn-${c.k.replace(/[^a-zA-Z0-9]/g,'_')}" onclick="selChoiceSingle('${c.k}')">
+          <strong>${c.icon}  ${c.l}</strong>
+          <span style="font-size:8px;letter-spacing:2px;color:var(--text3);display:block;margin-bottom:4px">${c.sub}</span>
+          <span style="color:var(--text2)">${c.d}</span>
+          ${c.cost ? `<span style="display:block;margin-top:4px;font-size:9px;color:var(--amber)">⚠ ${c.cost}</span>` : ''}
+        </button>`).join("") +
+        `<button id="confirm-choices-btn" class="btn-choice" style="opacity:0.35;pointer-events:none;cursor:not-allowed;" onclick="confirmUpgradeChoices()">
+          <strong>✓ CONFIRM SELECTION →</strong>
+          <span style="color:var(--text2)">Select one or both evolutions above, or one option below, then confirm.</span>
+        </button>`;
+    } else {
+      // Standard single-select mode (Nights 1-6)
+      choicesEl.innerHTML=choices.map(c=> c.locked ? `
+        <div class="btn-choice choice-locked" data-tooltip="${c.lockedMsg}">
+          <strong>${c.icon}  ${c.l}</strong>
+          <span style="font-size:8px;letter-spacing:2px;color:var(--text3);display:block;margin-bottom:4px">${c.sub}</span>
+          <span style="color:var(--text2)">${c.d}</span>
+          ${c.cost ? `<span style="display:block;margin-top:4px;font-size:9px;color:var(--amber)">⚠ ${c.cost}</span>` : ''}
+        </div>` : `
+        <button class="btn-choice" onclick="selChoice('${c.k}')">
+          <strong>${c.icon}  ${c.l}</strong>
+          <span style="font-size:8px;letter-spacing:2px;color:var(--text3);display:block;margin-bottom:4px">${c.sub}</span>
+          <span style="color:var(--text2)">${c.d}</span>
+          ${c.cost ? `<span style="display:block;margin-top:4px;font-size:9px;color:var(--amber)">⚠ ${c.cost}</span>` : ''}
+        </button>`).join("");
+    }
   }
 
   document.getElementById("debrief-modal").classList.add("open");
 }
+// Pending selections for Night 7+ toggle-mode debrief
+let _pendingChoiceKeys = new Set();
+
+function toggleUpgradeChoice(k){
+  const safeId = k.replace(/[^a-zA-Z0-9]/g,"_");
+  if(_pendingChoiceKeys.has(k)){
+    _pendingChoiceKeys.delete(k);
+    document.getElementById("choice-btn-"+safeId)?.classList.remove("selected-choice");
+  } else {
+    // Deselect any non-upgrade (standard) choices
+    [..._pendingChoiceKeys].forEach(key=>{
+      if(!key.startsWith("EVO_")){
+        _pendingChoiceKeys.delete(key);
+        document.getElementById("choice-btn-"+key.replace(/[^a-zA-Z0-9]/g,"_"))?.classList.remove("selected-choice");
+      }
+    });
+    _pendingChoiceKeys.add(k);
+    document.getElementById("choice-btn-"+safeId)?.classList.add("selected-choice");
+  }
+  _updateConfirmBtn();
+}
+
+function selChoiceSingle(k){
+  // Deselect everything, then select this one
+  [..._pendingChoiceKeys].forEach(key=>{
+    document.getElementById("choice-btn-"+key.replace(/[^a-zA-Z0-9]/g,"_"))?.classList.remove("selected-choice");
+  });
+  _pendingChoiceKeys = new Set([k]);
+  document.getElementById("choice-btn-"+k.replace(/[^a-zA-Z0-9]/g,"_"))?.classList.add("selected-choice");
+  _updateConfirmBtn();
+}
+
+function _updateConfirmBtn(){
+  const btn = document.getElementById("confirm-choices-btn");
+  if(!btn) return;
+  const has = _pendingChoiceKeys.size > 0;
+  btn.style.opacity = has ? "1" : "0.35";
+  btn.style.pointerEvents = has ? "auto" : "none";
+  btn.style.cursor = has ? "pointer" : "not-allowed";
+}
+
+function confirmUpgradeChoices(){
+  if(_pendingChoiceKeys.size === 0) return;
+  const allChoices = buildNightChoices(G.night, G.night+1);
+  [..._pendingChoiceKeys].forEach(k=>{
+    const chosen = allChoices.find(c=>c.k===k);
+    if(chosen){
+      G.shiftChoice = k;
+      if(!CARRY.shiftChoices) CARRY.shiftChoices=[];
+      CARRY.shiftChoices.push(k);
+      if(!CARRY.choiceData) CARRY.choiceData=[];
+      CARRY.choiceData.push({night:G.night, ...chosen});
+      applyChoiceBuff(chosen);
+    }
+  });
+  _pendingChoiceKeys = new Set();
+  document.getElementById("debrief-modal").classList.remove("open");
+  showSleepScreen();
+}
+
 function selChoice(k){
   G.shiftChoice=k;
   CARRY.shiftChoices.push(k);
@@ -8259,7 +8356,10 @@ function showTeaser(){
 // ── EVOLUTION HELPERS ─────────────────────────────────
 function getUnitEvolutionTier(u) {
   if(!u) return 1;
-  if(u.isSuppressor || u.isEvolved || u.id === (CARRY && CARRY.evolvedPoliceUnit) || u.id === (CARRY && CARRY.evolvedEMSUnit)) return 2;
+  if(u.isSuppressor || u.isEvolved || u.id === (CARRY && CARRY.evolvedPoliceUnit) || u.id === (CARRY && CARRY.evolvedEMSUnit)) {
+    const xp = (CARRY && CARRY.unitXP && CARRY.unitXP[u.id] != null) ? CARRY.unitXP[u.id] : (u.xp || 0);
+    return xp >= 16 ? 3 : 2;
+  }
   return 1;
 }
 // Stat modifiers by tier
