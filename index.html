@@ -7405,6 +7405,13 @@ function doMissionWithdraw(incId){
     CARRY.collectedDistricts.add(i._collectDistrict||i.district);
     removePin(i.id); removeUnitMarkers(i.id);
     G.incidents=G.incidents.filter(x=>x.id!==incId);
+  } else if(i.isAugmentMission){
+    comm("system","AUGMENT STOOD DOWN — "+i.district.toUpperCase()+". Engineer returning to base. District comms no longer enhanced.");
+    notif("Augment ended: "+i.district,"");
+    releaseUnits();
+    // No trust penalty, no failedCt — augment stand-downs are not failures
+    removePin(i.id); removeUnitMarkers(i.id);
+    G.incidents=G.incidents.filter(x=>x.id!==incId);
   }
   renderQueue(); renderUnits(); topBar();
 }
