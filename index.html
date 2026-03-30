@@ -7755,6 +7755,80 @@ function buildNightChoices(night, nextNight) {
 
     return [...upgradeSlots, ..._stdPool.slice(0, _remainSlots)];
   }
+
+  // ── NIGHTS 1–5: Standard choices ──
+  const choices = [];
+  const canAddChannel = G.threadsMax < 5;
+  const canAddUnit = G.units.length < 10;
+
+  // ── LANE C: Comm Channel or Unit Add (if capped) ──
+  if(canAddChannel){
+    choices.push({
+      k:"C", icon:"📡",
+      l:"Request Additional Dispatcher",
+      sub:"Staffing / Capacity",
+      d:"Adds one comm channel — handle one more active call simultaneously.",
+      cost: null,
+      buff:{type:"channel"}
+    });
+  } else {
+    const unitType = _suggestUnitType();
+    choices.push({
+      k:"C", icon:"🚑",
+      l:"Request Additional "+unitType+" Unit",
+      sub:"Staffing / Unit",
+      d:"An additional "+unitType+" unit joins your roster for Night "+nextNight+".",
+      cost: null,
+      buff:{type:"addUnit", unitType}
+    });
+  }
+
+  // ── LANE A: Response Speed Buff ──
+  const speedChoices = [
+    {k:"A",icon:"⚡",l:"Authorize Rapid Deployment Protocol",sub:"Operations / Speed",
+     d:"All units respond 20% faster next shift — travel times reduced across the board.",
+     cost:"Units start Night "+nextNight+" at Yellow readiness — the shift begins tired.",
+     buff:{type:"responseTime",mult:0.80,unitType:"all",fatigueMod:2}},
+    {k:"A",icon:"🚒",l:"Fire Department Priority Routing",sub:"Operations / Fire",
+     d:"Fire units respond 25% faster and are less likely to stage on complex calls.",
+     cost:"Fire units carry +2 fatigue into Night "+nextNight+" from pre-positioning.",
+     buff:{type:"unitBuff",unitType:"Fire",failMod:-0.06,limboMod:-0.05,fatigueMod:2}},
+    {k:"A",icon:"🚑",l:"EMS Protocol Upgrade",sub:"Operations / Medical",
+     d:"EMS units have a higher floor on medical call outcomes. Fewer failed responses.",
+     cost:"EMS units carry +2 fatigue from the training run.",
+     buff:{type:"unitBuff",unitType:"EMS",failMod:-0.08,limboMod:-0.04,fatigueMod:2}},
+    {k:"A",icon:"🚔",l:"Police Tactical Briefing",sub:"Operations / Police",
+     d:"Police units are less likely to stage or go dark on violence and unclear calls.",
+     cost:"Police units carry +2 fatigue from the extended briefing.",
+     buff:{type:"unitBuff",unitType:"Police",failMod:-0.05,limboMod:-0.07,fatigueMod:2}},
+  ];
+  const stressedType = _mostStressedUnitType();
+  const speedOpt = speedChoices.find(c=>c.buff.unitType===stressedType) || speedChoices[0];
+  choices.unshift(speedOpt);
+
+  // ── LANE B: Unit Add or targeted buff ──
+  if(canAddUnit){
+    const unitType2 = _suggestUnitType2();
+    choices.push({
+      k:"B", icon:"👥",
+      l:"Mutual Aid — Additional "+unitType2+" Unit",
+      sub:"Staffing / Unit",
+      d:"A "+unitType2+" unit from a neighboring jurisdiction joins for Night "+nextNight+".",
+      cost:"Mutual aid unit starts as Rookie — slightly higher fail rate until they learn Crown Harbor.",
+      buff:{type:"addUnit",unitType:unitType2,rookieDebuff:true}
+    });
+  } else {
+    choices.push({
+      k:"B", icon:"🎓",
+      l:"Cross-Training: "+_suggestUnitType()+" Specialist",
+      sub:"Training / Capability",
+      d:"All "+_suggestUnitType()+" units get a cross-training session — reduced fail chance on complex calls.",
+      cost: null,
+      buff:{type:"unitBuff",unitType:_suggestUnitType(),failMod:-0.06,limboMod:-0.04,fatigueMod:0}
+    });
+  }
+
+  return choices;
 }
 
 function _mostStressedUnitType(){
