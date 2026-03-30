@@ -10327,6 +10327,7 @@ function startAugmentMission(district) {
   comm("system","AUGMENT INITIATED — "+district.toUpperCase()+". Engineer deploying. District comms hardened — expect improved call outcomes and no radio silence while position is held.");
   spawn(template);
   renderQueue();
+  if(!G.tut_seen || !G.tut_seen.has("augment_intro")) setTimeout(()=>showCtxTut("augment_intro"), 1800);
 }
 
 function resolveCollectionFail(i) {
@@ -10526,6 +10527,11 @@ const CTX_TUTS = {
     body:"Your EMS unit has been certified as a <b>Specialist</b>. This is the unit the research teams have been waiting for.\n\nThe Specialist can run <b>Collection Operations</b> — extracting specimens from districts under your control. The research teams need these samples to understand what's driving the outbreak and find a way to stop it.\n\n<b>There's a catch:</b> Collection requires an active <b>Fortify</b> in the same district. The Marshal holds the perimeter while the Specialist works. If the Fortify drops before the Specialist is done, they're exposed — and that doesn't end well.\n\nEach district can only be sampled once. Choose your order carefully.\n\n<b>The research teams need 5-6 clean samples. That's the job now.</b>",
     target:"units-bar", place:"right"
   },
+  augment_intro: {
+    title:"Augment — Hardened Comms",
+    body:"Your Engineer just deployed on an <b>Augment Operation</b>. While they hold position, every call coming out of that district is working with better information and tighter coordination.\n\nWhile active:\n• <b>No radio silence</b> — the Engineer has the local relay hardened. Units won\'t go dark in this district.\n• <b>Improved outcomes</b> — Sev1–3 calls resolve faster with reduced fail and limbo chance.\n\n<b>Solo mission</b> — the Engineer works alone. No reinforcements.\n\nMonitor their fatigue. When they burn out, the effect drops and they come home. You can also withdraw them at any time from the incident card.",
+    target:"queue-wrap", place:"left"
+  },
   medrow_cleansed: {
     title:"Med Row — Reclaimed",
     body:"The room-by-room fighting was brutal, but the hospital is back in our hands. The labs too — the ones that are left, anyway.\n\nDespite the widespread damage, the lab complexes listed as critical are intact — all of them. And as if that wasn't enough — mop-up teams clearing these facilities found most of the research staff had survived by shutting themselves in storage vaults, hermetic chambers, and even a broom closet.\n\nWe don't know what caused this yet — but with what we secured today, the path to saving this city just got a lot shorter.\n\n<b>This was a good day...ok, celebration over. Now, step two.</b>",
@@ -10574,7 +10580,7 @@ function isModalOpen() {
 function showCtxTut(key) {
   if(localStorage.getItem('nsContainmentTutorials') === 'off') return;
   // Night 1 only for original tutorials; new tutorials allowed on any night
-  const multiNightTuts = new Set(["first_unit_loss","comms_degraded","trust_intro","first_recall","first_threads_full","first_defend_mission","unit_retreat","spawn_dark","hq_secured","suppressor_intro","fortify_intro","xp_bars_visible","interchange_cleansed","medrow_cleansed","specialist_intro"]);
+  const multiNightTuts = new Set(["first_unit_loss","comms_degraded","trust_intro","first_recall","first_threads_full","first_defend_mission","unit_retreat","spawn_dark","hq_secured","suppressor_intro","fortify_intro","xp_bars_visible","interchange_cleansed","medrow_cleansed","specialist_intro","augment_intro"]);
   if(G.night > 1 && !multiNightTuts.has(key)) return;
   if(!G.tut_seen) G.tut_seen = new Set();
   if(G.tut_seen.has(key)) return;
