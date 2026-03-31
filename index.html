@@ -8146,9 +8146,9 @@ function showDebrief(){
     buls.push({t:"Night 6 closed. Recovery phase active — research teams on the ground.",f:false});
     const emsReady = G.units.find(u=>u.type==="EMS"&&!u.isEvolved&&!u.isSuppressor&&u.id!==(CARRY.evolvedEMSUnit||"")&&(u.xp||0)>=10);
     if(emsReady)
-      buls.push({t:emsReady.id+" — Specialist threshold reached. Natural evolution queued for debrief.",f:false});
+      buls.push({t:emsReady.id+" has the instincts — impressed the Instructors in the field, the classroom, and apparently at the bar too. Fully suited up as a Specialist tonight — Collection ops are available.",f:false});
     else
-      buls.push({t:"No Paramedic at threshold yet — Specialist certification offered in debrief. Collection ops unlock Night 7.",f:false});
+      buls.push({t:"Nobody made the cut — so the Instructors fast-tracked your best Paramedic through a crash cert during the day. Nobody’s asking about the tequila. Either way, you’ve got a Specialist going into tonight — Collection ops are available.",f:false});
   }
   if(night===5) {
     buls.push({t:"Night 5 closed. Crown Harbor: one district standing. Suppressor unit active in roster.",f:false});
