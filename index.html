@@ -530,7 +530,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v1.01</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v1.02</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -5322,7 +5322,7 @@ function startNight(night){
 }
 
 function showNightOpeningComms(night){
-  const nightLabels = {1:"Night 1 — Standard Shift",2:"Night 2 — Elevated Alert",3:"Night 3 — Emergency Protocol Active",4:"Night 4 — Emergency Relocation Protocol",5:"Night 5 — Last District Standing",6:"Night 6 — Beachhead",7:"Night 7 — Souvenir Shopping"};
+  const nightLabels = {1:"Night 1 — Standard Shift",2:"Night 2 — Elevated Alert",3:"Night 3 — Emergency Protocol Active",4:"Night 4 — Emergency Relocation Protocol",5:"Night 5 — Last District Standing",6:"Night 6 — Beachhead",7:"Night 7 — Souvenir Shopping",8:"Night 8 — The Window",9:"Night 9 — Accelerating",10:"Night 10 — The Verdict"};
   if(CARRY._egressPath && CARRY._egressBreakout) nightLabels[night] = "Night "+night+" — Breakout";
   else if(CARRY._egressPath) nightLabels[night] = "Night "+night+" — Egress Protocol";
   const notes = {
@@ -5332,7 +5332,10 @@ function showNightOpeningComms(night){
     4:"Supervisor: Civic Core is under pressure. We expect forced relocation before midnight. Three districts are on standby. Be ready — tonight changes everything.",
     5:"Supervisor: We are it. One district. Everything else is gone. The airdrop came in at dawn — supplies, a plan, and something else we'll brief you on shortly. Hold the perimeter and keep your people alive. That's the whole job tonight.",
     6:"Supervisor: We're not just holding anymore. The airport is open — first line to the outside since this started. Research teams are inbound, more gear behind them. Don't mistake that for a win yet. We're still outnumbered, still short on answers, and whatever's driving this hasn't stopped. We push. That's the job now.",
-    7:"Supervisor: Research teams are on the ground. The collection phase starts now — but only if you have the right unit in the right place. Hold what you've taken. Get those samples."
+    7:"Supervisor: Research teams are on the ground. The collection phase starts now — but only if you have the right unit in the right place. Hold what you've taken. Get those samples.",
+    8:"Supervisor: Research teams ran some initial analysis overnight. Here's the short version: the infection progresses through a predictable sequence. During a specific early phase, there is a compound in infected biological matter that will respond to synthetic intervention — Dr. Reyes says she can build a treatment if she gets enough of it. The catch: the mutation is still evolving and at an increasing pace. Her estimate is three to four days before it evolves further and no longer has the weakness she has identified. After that any treatment pathway closes entirely. Every Collection operation your Specialist runs tonight feeds directly into the synthesis model. The target counter at the top of your screen is the number she needs. Hold your districts and continue to cleanse others — every controlled district is another potential collection site. Get the samples before it is too late.",
+    9:"Supervisor: Reyes updated her model — the mutation rate is faster than her initial assessment. The window is compressing. If you're behind on the sample target, tonight is the night to close the gap. Don't leave any controlled district uncollected. Secondary priority: your units. The push ahead is going to need your best people at full capability. Every shift is a chance to advance them. Don't let it go to waste.",
+    10:"Supervisor: Whatever sample count you bring to end of shift is what Reyes works with. She'll have preliminary synthesis results by the time you wrap up. If the count is there, there's a path forward — she'll tell us what it looks like. If it isn't, we'll need to find another way out. Hold your gains. Push your units as far as they'll go. Get your units ready — tonight determines the fate of the city...and us."
   };
   const threads = G.threadsMax;
   comm("system","CROWN HARBOR 911 / OPS  ·  "+ (nightLabels[night]||"Night "+night) +" · Shift Start 22:00");
@@ -8059,7 +8062,8 @@ function buildNightChoices(night, nextNight) {
     // ── NIGHT 7+: Unified upgrade + standard choice system ──
   if(night >= 7) {
     const upgradable = _getUpgradableUnits();
-    const upgradeSlots = upgradable.slice(0,2).map(u=>{
+    const _interchangeBonus = !!(CARRY.lostDistricts && !CARRY.lostDistricts.has("Interchange"));
+    const upgradeSlots = upgradable.slice(0, _interchangeBonus ? 3 : 2).map(u=>{
       const tier = getUnitEvolutionTier(u);
       const tierData = EVOLUTION_TIERS[u.type];
       const toTier = tierData[tier];
@@ -8084,7 +8088,7 @@ function buildNightChoices(night, nextNight) {
     });
 
     // Standard slots: fill remaining (3 - upgrade count) from priority pool
-    const _remainSlots = 3 - upgradeSlots.length;
+    const _remainSlots = Math.max(1, 3 - upgradeSlots.length);
     const _stdPool = [];
     const _unitLostThisNight = !!(CARRY.unitLost || (CARRY.unitsLost && CARRY.unitsLost.length > 0));
 
