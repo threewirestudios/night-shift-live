@@ -729,6 +729,11 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
       <div class="tb-label">Coverage</div>
       <div class="tb-val" id="tb-cov" style="color:var(--green)">STABLE</div>
     </div>
+    <div class="tb-sep" id="tb-sep-samples" style="display:none"></div>
+    <div class="tb-item" id="tba-samples" style="display:none">
+      <div class="tb-label">Samples</div>
+      <div class="tb-val" id="tb-samples" style="color:var(--green)">0 / 6</div>
+    </div>
     <div class="tb-right">
       <div class="tb-night-wrap">
         <span id="tb-night-label" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);letter-spacing:2px;">NIGHT 1</span>
@@ -9923,6 +9928,24 @@ function topBar(){
   if(tcDisp){ tcDisp.textContent = G.threadsUsed+" / "+G.threadsMax; tcDisp.style.color = tcColor; }
   const cov=G.spread<2?"STABLE":G.spread<4?"STRAINED":"DEGRADED";
   const ce=document.getElementById("tb-cov"); ce.textContent=cov; ce.style.color=G.spread<2?"var(--green)":G.spread<4?"var(--amber)":"var(--red)";
+
+  // ── Sample counter (Night 8+) ──
+  const _sampEl  = document.getElementById("tba-samples");
+  const _sampSep = document.getElementById("tb-sep-samples");
+  if(G.night >= 8) {
+    if(_sampEl)  _sampEl.style.display  = "flex";
+    if(_sampSep) _sampSep.style.display = "";
+    const _sCount  = CARRY.collectionCount || 0;
+    const _sTarget = (CARRY.lostDistricts && !CARRY.lostDistricts.has("Med Row")) ? 5 : 6;
+    const _sEl = document.getElementById("tb-samples");
+    if(_sEl) {
+      _sEl.textContent = _sCount + " / " + _sTarget;
+      _sEl.style.color = _sCount >= _sTarget ? "var(--green)" : _sCount >= _sTarget - 1 ? "var(--amber)" : "var(--red)";
+    }
+  } else {
+    if(_sampEl)  _sampEl.style.display  = "none";
+    if(_sampSep) _sampSep.style.display = "none";
+  }
 }
 
 function limboUI(){
