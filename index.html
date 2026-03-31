@@ -8881,10 +8881,9 @@ function showEgressBreakoutFail(){
   const btn = document.getElementById("egress-outcome-btn");
   if(sub) sub.textContent = "BREAKOUT FAILED — EVACUATION IMPOSSIBLE";
   if(body) body.innerHTML =
-    "<p>Docklands held against everything you sent. The perimeter never broke. The pier was never accessible.</p>" +
-    "<p>The governor’s office closed the evacuation window at dawn. The naval cordon received updated orders.</p>" +
-    "<p>Crown Harbor is a permanent quarantine zone. What’s left of the city will be studied, documented, and eventually sealed.</p>" +
-    "<p>No one asked what happened to the people still inside.</p>";
+    "<p>Despite all your effort, you couldn't clear a path to the docks… the infested were too strong, too much.</p>" +
+    "<p>Crown Harbor sits silent now as a permanent quarantine zone. What's left of the city will one day be studied, documented, and sealed away.</p>" +
+    "<p>No one will ask about the escape attempts that almost worked.</p>";
   if(img) { img.src = "Cutscene Graphics/Endscene docks - breakout fails.png"; img.style.display = ""; }
   if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
   document.getElementById("egress-outcome-screen").classList.add("active");
