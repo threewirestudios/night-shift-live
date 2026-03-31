@@ -8486,6 +8486,18 @@ function showDebrief(){
       buls.push({t:"District reclaimed this shift — cleanse operation successful.",f:false});
 
   }
+  if(night===7 || night===8 || night===9) {
+    const _sCount   = CARRY.collectionCount || 0;
+    const _sTarget  = (CARRY.lostDistricts && !CARRY.lostDistricts.has("Med Row")) ? 5 : 6;
+    const _sRemain  = Math.max(0, _sTarget - _sCount);
+    if(_sCount >= _sTarget) {
+      buls.push({t:"Specimen target reached — "+_sCount+" / "+_sTarget+" collected. Dr. Reyes has what she needs.",f:false});
+    } else if(_sRemain === 1) {
+      buls.push({t:"One specimen short — "+_sCount+" / "+_sTarget+" collected. One more Collection op closes the gap.",f:true});
+    } else {
+      buls.push({t:"Specimen count: "+_sCount+" / "+_sTarget+". "+_sRemain+" more needed before end of Night 10.",f:true});
+    }
+  }
 
   document.getElementById("db-bullets").innerHTML =
     buls.map(b=>`<div class="db-bullet${b.f?" db-flag":""}">${b.t}</div>`).join("");
@@ -8517,7 +8529,10 @@ function showDebrief(){
       3: "Med Row is gone. Docklands is gone. Night "+nextNight+" is going to hit different. Make this choice count.",
       4: "Crown Harbor just changed tonight. Night "+nextNight+" means less information, more calls you won't see coming. Make this count.",
       5: "You held one district. That's the foundation. Night "+nextNight+" is where you start taking ground back. One decision before you go.",
-      6: "Research teams are on the ground. Night 7 is when they get to work — but only if you have the right unit to support them. Make this call."
+      6: "Research teams are on the ground. Night 7 is when they get to work — but only if you have the right unit to support them. Make this call.",
+      7: "Collection phase is active — but Reyes needs numbers, not effort. Before Night 8, one decision that might change those numbers.",
+      8: "The window is compressing — Reyes confirmed it this morning. Before Night 9, make a call.",
+      9: "One night left on the clock. Whatever you bring to end of shift is what Reyes has to work with. Last call before Night 10."
     };
     radioCtx.innerHTML = `<span style="color:var(--cyan);font-size:9px;letter-spacing:1px">SUPERVISOR ·</span> "${radioLines[night]||"Before next shift — make a call."}"`;
 
@@ -8769,7 +8784,7 @@ function showSleepScreen(){
       setTimeout(()=>{
         document.getElementById("sleep-screen").classList.remove("active");
         const _nextFromSleep = G.night + 1;
-        if(_nextFromSleep > 7) showComingSoon(); else if(_nextFromSleep >= 7) showOpBriefing(_nextFromSleep); else showTeaser();
+        if(_nextFromSleep > 10) showComingSoon(); else if(_nextFromSleep >= 7) showOpBriefing(_nextFromSleep); else showTeaser();
       }, 1200);
     }
   }, tickSpeed);
