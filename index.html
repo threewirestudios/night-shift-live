@@ -8485,6 +8485,21 @@ const SLEEP_QUIPS = [
 
 function showSleepScreen(){
   const night = G.night;
+
+  // Night 10: research verdict routing (end-of-debrief decision point)
+  if(night === 10) {
+    const _sCount  = CARRY.collectionCount || 0;
+    const _sTarget = (CARRY.lostDistricts && !CARRY.lostDistricts.has("Med Row")) ? 5 : 6;
+    document.getElementById("game-screen").classList.remove("active");
+    document.getElementById("debrief-modal").classList.remove("open");
+    if(_sCount >= _sTarget) {
+      showResearchWin();
+    } else {
+      showDocksEgress();
+    }
+    return;
+  }
+
   const nextNight = night + 1;
 
   // Nights with cutscenes (3, 4, 5, 6) → show cutscene instead of sleep screen
@@ -8559,6 +8574,12 @@ function endCutscene(){
     window._cutsceneCallback = null;
     cb();
   }
+}
+
+function showResearchWin(){
+  // TODO: Replace with full research win / Civic Core push sequence
+  // Triggered when sample target reached by end of Night 10
+  showComingSoon();
 }
 
 function showDocksEgress(){
@@ -10536,6 +10557,14 @@ function resolveCollectionSuccess(i) {
   CARRY.collectionCount++;
   comm("success","✔ COLLECTION COMPLETE — "+d.toUpperCase()+". Specimens secured. Research teams have what they need from this district.");
   notif("Collection complete: "+d+" ("+CARRY.collectionCount+" total)","green");
+  // Fire threshold tutorial once per campaign, only before Night 10
+  if(!CARRY._samplesThresholdShown && G.night < 10) {
+    const _sTarget = (CARRY.lostDistricts && !CARRY.lostDistricts.has("Med Row")) ? 5 : 6;
+    if(CARRY.collectionCount >= _sTarget) {
+      CARRY._samplesThresholdShown = true;
+      setTimeout(()=>showCtxTut("samples_threshold"), 1800);
+    }
+  }
 }
 
 function canAugment(district) {
@@ -10777,6 +10806,15 @@ const CTX_TUTS = {
     target:"map-panel", place:"right",
     img:"Cutscene Graphics/Interchange Liberation 2.png"
   },
+  samples_threshold: {
+    title:"Specimens Secured — Research Teams Have What They Need",
+    body:"The research teams have confirmed enough specimens to begin synthesizing a countermeasure.
+
+That doesn’t mean you stop. Every district you retake between now and the end of Night 10 puts more of Crown Harbor’s people out of the danger zone — and buys the scientists time to finish the work.
+
+Push further. The city isn’t saved yet.",
+    target:"tba-samples", place:"below"
+  },
   specialist_intro: {
     title:"Specialist — Collection Operations",
     body:"Your EMS unit has been certified as a <b>Specialist</b>. This is the unit the research teams have been waiting for.\n\nThe Specialist can run <b>Collection Operations</b> — extracting specimens from districts under your control. The research teams need these samples to understand what's driving the outbreak and find a way to stop it.\n\n<b>There's a catch:</b> Collection requires an active <b>Fortify</b> in the same district. The Marshal holds the perimeter while the Specialist works. If the Fortify drops before the Specialist is done, they're exposed — and that doesn't end well.\n\nEach district can only be sampled once. Choose your order carefully.\n\n<b>The research teams need 5-6 clean samples. That's the job now.</b>",
@@ -10835,7 +10873,7 @@ function isModalOpen() {
 function showCtxTut(key) {
   if(localStorage.getItem('nsContainmentTutorials') === 'off') return;
   // Night 1 only for original tutorials; new tutorials allowed on any night
-  const multiNightTuts = new Set(["first_unit_loss","comms_degraded","trust_intro","first_recall","first_threads_full","first_defend_mission","unit_retreat","spawn_dark","hq_secured","suppressor_intro","fortify_intro","xp_bars_visible","interchange_cleansed","medrow_cleansed","specialist_intro","augment_intro"]);
+  const multiNightTuts = new Set(["first_unit_loss","comms_degraded","trust_intro","first_recall","first_threads_full","first_defend_mission","unit_retreat","spawn_dark","hq_secured","suppressor_intro","fortify_intro","xp_bars_visible","interchange_cleansed","medrow_cleansed","specialist_intro","augment_intro","samples_threshold"]);
   if(G.night > 1 && !multiNightTuts.has(key)) return;
   if(!G.tut_seen) G.tut_seen = new Set();
   if(G.tut_seen.has(key)) return;
