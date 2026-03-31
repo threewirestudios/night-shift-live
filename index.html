@@ -5024,26 +5024,50 @@ function startNight(night){
       setTimeout(()=>{ if(G.tut_seen) G.tut_seen.delete("suppressor_intro"); showCtxTut("suppressor_intro"); }, 2500);
     }, 3000);
   }
-  // Night 6: add gifted Marshal if instructor deployment was selected Night 5
-  if(night === 6 && CARRY.giftedMarshal) {
-    CARRY.giftedMarshal = false; // consume
-    const existingPol = G.units.filter(u=>u.type==="Police").length;
-    const marshalId = "Pol"+(existingPol+1);
-    if(!CARRY.extraRoster) CARRY.extraRoster = [];
-    if(!CARRY.extraRoster.find(e=>e.id===marshalId))
-      CARRY.extraRoster.push({id:marshalId, type:"Police", name:"Marshal", extraProps:{isEvolved:true}});
-    G.units.push({
-      id:marshalId, type:"Police", name:"Marshal", status:"Available", posture:"Cautious",
-      readiness:"Green", condition:"Green", fatigue:30, assignedTo:null, callCount:0,
-      isEvolved:true, xp:0
-    });
-    CARRY.evolvedPoliceUnit = marshalId;
-    setTimeout(()=>{
-      renderUnits();
-      comm("system","INSTRUCTOR DEPLOYMENT: One of the embedded advisors has stepped out of the training role and into the field. Designated "+marshalId+" — Marshal-tier capability, effective immediately. Don't waste them.");
-    }, 2000);
+  // Night 6: auto-add Marshal — evolve most-experienced Police, or gift if none survived
+  if(night === 6 && !CARRY._marshalAdded) {
+    CARRY._marshalAdded = true;
+    const _policeUnits = G.units.filter(u => u.type === "Police" && !u.isEvolved);
+    if(_policeUnits.length) {
+      _policeUnits.sort((a,b) => ((b.xp||0) - (a.xp||0)));
+      const _m = _policeUnits[0];
+      const _excessXP = Math.max(0, (_m.xp||0) - 10);
+      _m.name = "Marshal";
+      _m.isEvolved = true;
+      if(!CARRY.unitXP) CARRY.unitXP = {};
+      CARRY.unitXP[_m.id] = _excessXP;
+      _m.xp = _excessXP;
+      if(CARRY.extraRoster) {
+        const _er = CARRY.extraRoster.find(e => e.id === _m.id);
+        if(_er) { if(!_er.extraProps) _er.extraProps = {}; _er.extraProps.isEvolved = true; _er.name = "Marshal"; }
+      }
+      CARRY.evolvedPolice = true;
+      CARRY.evolvedPoliceUnit = _m.id;
+      setTimeout(() => {
+        renderUnits();
+        comm("system", "FIELD PROMOTION — "+_m.id+": Most experienced Officer steps up. Designated Marshal — Fortify operations now unlocked.");
+      }, 2000);
+    } else {
+      // No Police survived Night 5 — gift a fresh Marshal
+      const _marshalId = "Pol1";
+      CARRY._marshalWasGifted = true;
+      if(!CARRY.extraRoster) CARRY.extraRoster = [];
+      if(!CARRY.extraRoster.find(e => e.id === _marshalId))
+        CARRY.extraRoster.push({id:_marshalId, type:"Police", name:"Marshal", extraProps:{isEvolved:true}});
+      G.units.push({
+        id:_marshalId, type:"Police", name:"Marshal", status:"Available", posture:"Cautious",
+        readiness:"Green", condition:"Green", fatigue:30, assignedTo:null, callCount:0,
+        isEvolved:true, xp:0
+      });
+      CARRY.evolvedPolice = true;
+      CARRY.evolvedPoliceUnit = _marshalId;
+      setTimeout(() => {
+        renderUnits();
+        comm("system", "INSTRUCTOR DEPLOYMENT: No Police units survived. One of the embedded advisors has stepped into the field as Marshal — Fortify operations now unlocked.");
+      }, 2000);
+    }
   }
-  // Reapply lost district visuals from previous nights
+    // Reapply lost district visuals from previous nights
   setTimeout(reapplyLostDistricts, 500);
   // Reapply HQ marker position if already relocated
   if(CARRY.hqRelocated && CARRY.hqDistrict) setTimeout(()=>moveHQMarker(CARRY.hqDistrict), 600);
@@ -7625,57 +7649,93 @@ function endShift(){
 // Lanes: Comm Channel (capped at 5), Response Buff, Unit Add/Buff
 
 function buildNightChoices(night, nextNight) {
-  // ── NIGHT 6: Police evolution + standard choices ──
+  // ── NIGHT 6: Specialist EVO (forced slot) + qualified unit/standard choices ──
   if(night === 6) {
-    const choices = [];
-    const policeAlive = G.units.filter(u=>u.type==="Police").length > 0;
-    if(policeAlive && !CARRY.evolvedPolice) {
-      // Normal path — evolve existing police unit
-      choices.push({
-        k:"EVO", icon:"⚡",
-        l:"Evolve Police Unit — Fortify Protocol",
-        sub:"Evolution / Police",
-        d:"One Police unit crosses into specialist territory. They gain the ability to run Fortify operations — locking down a district for a night, nulling incidents, and enabling EMS sample extraction.",
-        cost:"Evolution is permanent. The unit operates differently from here on.",
-        buff:{type:"evolvePolice"}
-      });
-    } else if(!policeAlive && !CARRY.evolvedPolice) {
-      // Fallback — no police survived; one of the instructors steps into the field
-      choices.push({
-        k:"EVO", icon:"⚡",
-        l:"Instructor Deployment — Marshal",
-        sub:"Evolution / Police",
-        d:"Your police roster didn't make it through the night. One of the airdropped instructors — ex-special operations, been training host-nation forces longer than your officers have been alive — is stepping out of the advisory role and into the field. Full capabilities from day one.",
-        cost:"This unit is attached for the duration. They don't take orders the same way your regulars do.",
-        buff:{type:"giftMarshal"}
+    const _n6Choices = [];
+
+    // ── SLOT 1: Paramedic → Specialist (always offered) ──
+    const _n6EMS = (G.units||[]).filter(u => u.type==="EMS" && !u.isEvolved);
+    _n6EMS.sort((a,b) => ((b.xp||0) - (a.xp||0)));
+    const _n6Target = _n6EMS[0];
+    if(_n6Target) {
+      const _n6XP = (CARRY && CARRY.unitXP && CARRY.unitXP[_n6Target.id] != null)
+        ? CARRY.unitXP[_n6Target.id] : (_n6Target.xp || 0);
+      const _n6Natural = _n6XP >= 10;
+      const _n6Excess  = _n6Natural ? (_n6XP - 10) : 0;
+      _n6Choices.push({
+        k:"EVO_"+_n6Target.id, isUpgrade:true, unitId:_n6Target.id, icon:"⚡",
+        l:_n6Target.name+" → Specialist",
+        sub:_n6Natural ? "Evolution / EMS — Field Earned" : "Evolution / EMS — Research Directive",
+        d:_n6Natural
+          ? "This Paramedic earned it the hard way. Certified for Collection operations — specimen extraction the research teams need to end this."+(_n6Excess > 0 ? " "+_n6Excess+" XP carries forward into Specialist tier." : "")
+          : "No Paramedic crossed the threshold tonight, but the research teams can’t wait. This unit is certified now. Collection operations unlock for Night 7.",
+        cost:"Permanent — unit operates under Specialist protocol from here on.",
+        buff:{type:"evolveUnit", unitId:_n6Target.id}
       });
     }
-    // Standard speed buff — locked Night 6, evolution must come first
-    choices.push({
-      k:"A", icon:"🚔",
-      l:"Police Tactical Briefing",
-      sub:"Operations / Police",
-      d:"Police units are less likely to stage or go dark on violence and unclear calls.",
-      cost:"Police units carry +2 fatigue from the extended briefing.",
-      buff:{type:"unitBuff", unitType:"Police", failMod:-0.05, limboMod:-0.07, fatigueMod:2},
-      locked:true, lockedMsg:"...Seriously? A briefing? Over the super cop?"
-    });
-    // Unit add if possible — locked Night 6, evolution must come first
+
+    // ── SLOTS 2+3: Build standard pool, take 2 ──
+    const _n6Pool = [];
+
+    // Priority A: other unit at evolution threshold (non-EMS)
+    const _n6OtherEvo = _getUpgradableUnits().filter(u => u.type !== "EMS");
+    if(_n6OtherEvo.length) {
+      const _u = _n6OtherEvo[0];
+      const _t = getUnitEvolutionTier(_u);
+      const _tt = EVOLUTION_TIERS[_u.type][_t];
+      const _d = {
+        Fire:"Field promotion to Suppressor — unlocks Cleanse operations, reclaiming lost districts one by one.",
+        Police:"Upgrade to Marshal — unlocks Fortify operations, holding districts and enabling specimen collection.",
+        PublicWorks:"Engineer certification — unlocks Augment operations, improving comms and incident outcomes within a district."
+      };
+      _n6Pool.push({
+        k:"EVO_"+_u.id, isUpgrade:true, unitId:_u.id, icon:"⚡",
+        l:_u.name+" → "+_tt.name,
+        sub:"Evolution / "+(_u.type==="PublicWorks"?"Public Works":_u.type),
+        d:_d[_u.type]||"Unit upgrade — unlocks new capabilities.",
+        cost:"Permanent — unit operates under the new protocol from here on.",
+        buff:{type:"evolveUnit", unitId:_u.id}
+      });
+    }
+    // Priority B: comm channel
+    if(G.threadsMax < 5)
+      _n6Pool.push({k:"B",icon:"📡",l:"Request Additional Dispatcher",sub:"Staffing / Capacity",
+        d:"Adds one comm channel — handle one more active call simultaneously.",cost:null,buff:{type:"channel"}});
+    // Priority C: unit add
     if(G.units.filter(u=>!u.isSuppressor).length < 10) {
-      choices.push({
-        k:"B", icon:"🚑",
-        l:"Mutual Aid — Additional EMS Unit",
-        sub:"Staffing / Unit",
-        d:"An EMS unit from outside the perimeter managed to get through the night cordon.",
-        cost:"Mutual aid unit starts as Rookie — slightly higher fail rate until they learn the district.",
-        buff:{type:"addUnit", unitType:"EMS", rookieDebuff:true},
-        locked:true, lockedMsg:"...You REALLY don't want to pick this one right now."
-      });
+      const _ut6=_suggestUnitType2();
+      _n6Pool.push({k:"B",icon:"👥",l:"Mutual Aid — Additional "+_ut6+" Unit",sub:"Staffing / Unit",
+        d:"A "+_ut6+" unit joins for Night "+nextNight+".",
+        cost:"Mutual aid unit starts as Rookie — slightly higher fail rate until they learn Crown Harbor.",
+        buff:{type:"addUnit",unitType:_ut6,rookieDebuff:true}});
     }
-    return choices;
+    // Priority D: response buff (keyed to most stressed type)
+    const _n6StressType = _mostStressedUnitType();
+    const _n6SpeedOpts = [
+      {k:"C",icon:"⚡",l:"Authorize Rapid Deployment Protocol",sub:"Operations / Speed",
+       d:"All units respond 20% faster next shift — travel times reduced across the board.",
+       cost:"Units start Night "+nextNight+" at Yellow readiness — the shift begins tired.",
+       buff:{type:"responseTime",mult:0.80,unitType:"all",fatigueMod:2}},
+      {k:"C",icon:"🚒",l:"Fire Department Priority Routing",sub:"Operations / Fire",
+       d:"Fire units respond 25% faster and are less likely to stage on complex calls.",
+       cost:"Fire units carry +2 fatigue into Night "+nextNight+" from pre-positioning.",
+       buff:{type:"unitBuff",unitType:"Fire",failMod:-0.06,limboMod:-0.05,fatigueMod:2}},
+      {k:"C",icon:"🚑",l:"EMS Protocol Upgrade",sub:"Operations / Medical",
+       d:"EMS units have a higher floor on medical call outcomes. Fewer failed responses.",
+       cost:"EMS units carry +2 fatigue from the training run.",
+       buff:{type:"unitBuff",unitType:"EMS",failMod:-0.08,limboMod:-0.04,fatigueMod:2}},
+      {k:"C",icon:"🚔",l:"Police Tactical Briefing",sub:"Operations / Police",
+       d:"Police units are less likely to stage or go dark on violence and unclear calls.",
+       cost:"Police units carry +2 fatigue from the extended briefing.",
+       buff:{type:"unitBuff",unitType:"Police",failMod:-0.05,limboMod:-0.07,fatigueMod:2}},
+    ];
+    _n6Pool.push(_n6SpeedOpts.find(c=>c.buff.unitType===_n6StressType)||_n6SpeedOpts[0]);
+
+    _n6Choices.push(..._n6Pool.slice(0, 2));
+    return _n6Choices;
   }
 
-  // ── NIGHT 7+: Unified upgrade + standard choice system ──
+    // ── NIGHT 7+: Unified upgrade + standard choice system ──
   if(night >= 7) {
     const upgradable = _getUpgradableUnits();
     const upgradeSlots = upgradable.slice(0,2).map(u=>{
@@ -7894,19 +7954,6 @@ function applyChoiceBuff(choiceData){
     };
   } else if(buff.type==="addUnit"){
     CARRY.buffs.extraUnit = {type: buff.unitType, rookie: buff.rookieDebuff||false};
-  } else if(buff.type==="evolvePolice"){
-    CARRY.evolvedPolice = true;
-    // Mark the most experienced Police unit as evolved and rename to Marshal
-    const policeUnits = (G.units||[]).filter(u=>u.type==="Police");
-    policeUnits.sort((a,b)=>(b.xp||0)-(a.xp||0));
-    if(policeUnits.length){ CARRY.evolvedPoliceUnit = policeUnits[0].id; policeUnits[0].name = "Marshal"; }
-  } else if(buff.type==="giftMarshal"){
-    CARRY.evolvedPolice = true;
-    CARRY.giftedMarshal = true; // unit created at Night 7 startNight
-  } else if(buff.type==="evolveEMS"){
-    CARRY.evolvedEMS = true;
-    const emsUnit = (G.units||[]).find(u=>u.id===buff.unitId);
-    if(emsUnit){ CARRY.evolvedEMSUnit = emsUnit.id; emsUnit.name = "Specialist"; emsUnit.isEvolved = true; }
   } else if(buff.type==="evolveUnit"){
     // General evolution handler — L1→L2 or L2→L3
     const _eu = (G.units||[]).find(u=>u.id===buff.unitId);
@@ -7929,9 +7976,11 @@ function applyChoiceBuff(choiceData){
           if(_eu.type==="EMS")         { _eu.isBioAgent=true; }
           if(_eu.type==="PublicWorks") { _eu.isIronhand=true; }
         }
-        // XP resets to 0 so L3 threshold is always 16 from this point
+        // XP carryover: carry excess if unit naturally reached threshold, else reset to 0
         if(!CARRY.unitXP) CARRY.unitXP={};
-        CARRY.unitXP[_eu.id]=0; _eu.xp=0;
+        const _xpThreshold = _tier === 1 ? 10 : 16;
+        const _carryXP = (_eu.xp || 0) >= _xpThreshold ? (_eu.xp - _xpThreshold) : 0;
+        CARRY.unitXP[_eu.id] = _carryXP; _eu.xp = _carryXP;
         // Sync flags into extraRoster so save-loads preserve the evolution
         if(CARRY.extraRoster){
           const _er=CARRY.extraRoster.find(e=>e.id===_eu.id);
@@ -8333,7 +8382,7 @@ function showSleepScreen(){
   if(CUTSCENE_DATA[night]) {
     document.getElementById("game-screen").classList.remove("active");
     document.getElementById("debrief-modal").classList.remove("open");
-    showCutscene(night, ()=> night+1 > 6 ? showComingSoon() : night+1 >= 6 ? showOpBriefing(night+1) : showTeaser());
+    showCutscene(night, ()=> night+1 > 7 ? showComingSoon() : night+1 >= 6 ? showOpBriefing(night+1) : showTeaser());
     return;
   }
 
@@ -8374,7 +8423,7 @@ function showSleepScreen(){
       setTimeout(()=>{
         document.getElementById("sleep-screen").classList.remove("active");
         const _nextFromSleep = G.night + 1;
-        if(_nextFromSleep >= 7) showOpBriefing(_nextFromSleep); else showTeaser();
+        if(_nextFromSleep > 7) showComingSoon(); else if(_nextFromSleep >= 7) showOpBriefing(_nextFromSleep); else showTeaser();
       }, 1200);
     }
   }, tickSpeed);
@@ -8565,7 +8614,7 @@ function showOpBriefing(nextNight) {
   document.getElementById("opbrief-retake").textContent = retakeTxt;
 
   // ── EVOLUTION NARRATIVE ──
-  const evoNarrative = CARRY.giftedMarshal
+  const evoNarrative = CARRY._marshalWasGifted
     ? "The instructors who came in with that last airdrop are all pretty grizzled operators. They've been quietly working with your teams, and it shows. The Suppressor who hit the ground running last night? One of them.\n\nLast few nights have cost you some very capable teams — you're going into tonight without a reserve police unit. One of the instructors decided that's not acceptable. He's stepping into the field with you going forward as a Marshal.\n\nLook at the charts we passed around — they show you what this training and gear can do for your units as they learn over time. The more incidents they respond to successfully and the more time they spend training with these instructors after their shifts, the faster they'll advance. We'll provide a view on your most promising candidates before each shift to show how close they are, and offer advancements possible after each shift ends."
     : "The instructors who came in with that last airdrop are all pretty grizzled operators. They've been quietly working with your teams, and it shows. The Suppressor who hit the ground running last night? One of them. They quickly trained up your best cop unit to use the new gear and tactics. They'll now deploy as a full up Marshal. Your people are getting better. Keep putting them in the field.\n\nLook at the charts we passed around — they show you what this training and gear can do for your units as they learn over time. The more incidents they respond to successfully and the more time they spend training with these instructors after their shifts, the faster they'll advance. We'll provide a view on your most promising candidates before each shift to show how close they are, and offer advancements possible after each shift ends.";
   document.getElementById("opbrief-evo-narrative").innerHTML = evoNarrative.split("\n\n").map(p=>`<p style="margin:0 0 12px 0;">${p}</p>`).join("");
@@ -8637,15 +8686,6 @@ function showOpBriefing(nextNight) {
       <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text2);min-width:60px;text-align:right;">${xpLbl}</div>
     </div>`;
   }).join("");
-
-  if(CARRY.giftedMarshal){
-    unitsEl.innerHTML += `<div style="display:flex;align-items:center;gap:12px;background:rgba(224,152,24,.03);border:1px solid rgba(224,152,24,.25);border-left:3px solid var(--amber);padding:7px 12px;">
-      <div style="color:var(--amber);font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:1px;min-width:90px;">Marshal</div>
-      <div style="font-size:8px;letter-spacing:2px;color:var(--text3);font-family:'Share Tech Mono',monospace;min-width:70px;">POLICE</div>
-      <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;color:var(--amber);min-width:24px;">L2</div>
-      <div style="flex:1;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);">Deploying at shift start</div>
-    </div>`;
-  }
 
   // ── MARSHAL NOTE ──
   document.getElementById("opbrief-marshal-note").style.display = CARRY.evolvedPolice ? "" : "none";
