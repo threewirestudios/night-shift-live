@@ -656,6 +656,12 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
             <option value="cutscene-6">N6→7: Cutscene ★ (Momentum)</option>
             <option value="coming-soon">N7+: Coming Soon screen</option>
           </optgroup>
+          <optgroup label="ENDINGS">
+            <option value="egress-good">Docks Egress ★ — Quarantine Passage (good)</option>
+            <option value="egress-bad">Docks Egress ★ — Convoy Intercepted (bad)</option>
+            <option value="egress-ship-fail">Docks Egress — Pier Lost (mid-shift fail)</option>
+            <option value="egress-breakout-fail">Docks Egress — Breakout Failed</option>
+          </optgroup>
           <optgroup label="PRE-SHIFT BRIEFING">
             <option value="briefing-6">Night 6: Operational Briefing</option>
             <option value="briefing-7">Night 7: Operational Briefing</option>
@@ -10054,6 +10060,25 @@ function devPreviewScreen(){
   } else if(val === "event-hqevac"){
     document.getElementById("dev-panel").style.display = "none";
     showHQEvacModal();
+  } else if(val === "egress-good"){
+    document.getElementById("dev-panel").style.display = "none";
+    document.getElementById("title-screen").classList.remove("active");
+    if(!CARRY) CARRY = {};
+    showEgressOutcome(450);
+  } else if(val === "egress-bad"){
+    document.getElementById("dev-panel").style.display = "none";
+    document.getElementById("title-screen").classList.remove("active");
+    if(!CARRY) CARRY = {};
+    showEgressOutcome(180);
+  } else if(val === "egress-ship-fail"){
+    document.getElementById("dev-panel").style.display = "none";
+    document.getElementById("title-screen").classList.remove("active");
+    if(!G) G = {}; G.debriefDone = false;
+    triggerEgressShipFail();
+  } else if(val === "egress-breakout-fail"){
+    document.getElementById("dev-panel").style.display = "none";
+    document.getElementById("title-screen").classList.remove("active");
+    showEgressBreakoutFail();
   }
 }
 
