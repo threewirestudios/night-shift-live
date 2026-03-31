@@ -530,7 +530,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v0.99</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v1.00</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -713,16 +713,16 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
     <div id="tba-comms" style="display:none">
       <div id="tb-comms" style="color:var(--cyan)">0 / 3</div>
     </div>
-    <div class="tb-item" id="tba-spread">
-      <!-- Hidden as "Outbreak" until Night 4. Shows as "Activity Level" early on. -->
-      <div class="tb-label" id="tb-spread-label">Activity</div>
-      <div class="tb-val" id="tb-spread" style="color:var(--green)">NORMAL</div>
-    </div>
-    <div class="tb-sep"></div>
     <div class="tb-item" id="tba-legit" style="display:none">
       <!-- Hidden until Night 4 reveal -->
       <div class="tb-label">Trust</div>
       <div class="tb-val" id="tb-legit" style="color:var(--green)">10</div>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-item" id="tba-spread">
+      <!-- Hidden as "Outbreak" until Night 4. Shows as "Activity Level" early on. -->
+      <div class="tb-label" id="tb-spread-label">Activity</div>
+      <div class="tb-val" id="tb-spread" style="color:var(--green)">NORMAL</div>
     </div>
     <div class="tb-sep"></div>
     <div class="tb-item" id="tba-cov">
@@ -6710,7 +6710,7 @@ function buildSituationPanel(i) {
     const pushLabel = isCleanse ? "⚔ Continue Operation" : isCollect ? "⚔ Continue Collection" : isAugment ? "⚡ Hold Position" : (isDefendMode||isFortify) ? "⚔ Hold the Line" : "Authorize Entry";
     const holdLabel = isCleanse ? "↩ Abort & Fall Back" : isCollect ? "↩ Withdraw Specialist" : isAugment ? "↩ Withdraw Engineer" : (isDefendMode||isFortify) ? "↩ Withdraw" : "Maintain Stage";
     const pushDesc  = isCleanse ? "Operation continues. Check back to monitor unit status." : isCollect ? "Collection continues. Fortify must hold for the duration." : ctx.pushOutcome || ((isDefendMode||isFortify) ? "Hold position." : "Proceed when ready.");
-    const holdDesc  = isCleanse ? "Abort the sweep. Unit falls back — district remains lost." : isCollect ? "Withdraw the Specialist. District cannot be re-sampled." : isAugment ? "Pull the Engineer back. District comms return to normal." : ctx.holdOutcome || ((isDefendMode||isFortify) ? "Withdraw to safety. District will resume normal incident generation." : "Hold position. Advise when conditions improve.");
+    const holdDesc  = isCleanse ? "Abort the sweep. Unit falls back — district remains lost." : isCollect ? "Withdraw the Specialist. District must be re-secured before another collection attempt." : isAugment ? "Pull the Engineer back. District comms return to normal." : ctx.holdOutcome || ((isDefendMode||isFortify) ? "Withdraw to safety. District will resume normal incident generation." : "Hold position. Advise when conditions improve.");
 
     // Build fatigue readout for defend, cleanse, fortify, and collection missions
     let fatigueHTML = "";
@@ -6976,7 +6976,7 @@ function doStagedCall(choice) {
     } else if(i.isFortifyMission) {
           comm("system", "FORTIFY STOOD DOWN — "+i.district.toUpperCase()+". Marshal returning to base. District no longer covered.");
         } else if(i.isCollectionMission) {
-          comm("alert", "✖ COLLECTION WITHDRAWN — "+i.district.toUpperCase()+". Specialist pulled back. District cannot be re-sampled.");
+          comm("alert", "✖ COLLECTION WITHDRAWN — "+i.district.toUpperCase()+". Specialist pulled back. District must be re-secured before another collection attempt.");
           // Mark district as spent — no retry
           if(!CARRY.collectedDistricts) CARRY.collectedDistricts = new Set();
           CARRY.collectedDistricts.add(i.district);
@@ -6984,7 +6984,7 @@ function doStagedCall(choice) {
           comm("alert", "✖ "+i.title+" — units withdrew. "+i.district+" not held.");
         }
         if(!G.debriefFlags) G.debriefFlags=[];
-        G.debriefFlags.push({title:i.title, district:i.district, reason: i.isCleanseMission ? "Cleanse operation aborted. Player ordered Suppressor to fall back." : i.isFortifyMission ? "Fortify stood down by player order." : i.isCollectionMission ? "Collection withdrawn by player order. District cannot be re-sampled." : i.isAugmentMission ? "Augment stood down by player order. District comms returned to normal." : "Player ordered retreat. Units pulled back before position failed."});
+        G.debriefFlags.push({title:i.title, district:i.district, reason: i.isCleanseMission ? "Cleanse operation aborted. Player ordered Suppressor to fall back." : i.isFortifyMission ? "Fortify stood down by player order." : i.isCollectionMission ? "Collection withdrawn by player order. District must be re-secured before another collection attempt." : i.isAugmentMission ? "Augment stood down by player order. District comms returned to normal." : "Player ordered retreat. Units pulled back before position failed."});
         const fx = i.failFx||{};
         if(G.night > 1) G.spread = Math.max(0, G.spread+(fx.spread||0));
         const withdrawDelta = i.severity >= 3 ? -1 : -0.5;
@@ -10463,7 +10463,7 @@ function startAugmentMission(district) {
 
 function resolveCollectionFail(i) {
   const d = i._collectDistrict || i.district;
-  comm("alert","✘ COLLECTION FAILED — "+d.toUpperCase()+". Specimens from this district are unusable — contamination during handling. District cannot be re-sampled.");
+  comm("alert","✘ COLLECTION FAILED — "+d.toUpperCase()+". Specimens from this district are unusable — contamination during handling. Re-secure the district before attempting again.");
   // Still mark district as attempted so it can't be retried
   if(!CARRY.collectedDistricts) CARRY.collectedDistricts = new Set();
   CARRY.collectedDistricts.add(d);
@@ -10475,6 +10475,7 @@ function resolveCleanseSuccess(i) {
   G._cleanseCompletedN6 = true;
   CARRY.lostDistricts.delete(d);
   CARRY.cleansedDistrict = d; // persist for Night 6 hatch patch
+  if(CARRY.collectedDistricts) CARRY.collectedDistricts.delete(d); // re-cleanse resets collection eligibility
   // Remove hatch overlay
   const dKey = "dg-"+d.replace(/ /g,"");
   const el = document.getElementById(dKey);
