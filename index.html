@@ -8868,7 +8868,7 @@ function triggerEgressShipFail(){
     "<p>The infected pushed through the Docklands perimeter before the last civilians could board. The harbor went quiet.</p>" +
     "<p>There are no more ships. There is no more window. The quarantine line isn’t a problem anymore — no one is getting close enough to test it.</p>" +
     "<p>Crown Harbor’s story ends here.</p>";
-  if(img) img.style.display = "none";
+  if(img) { img.src = "Cutscene Graphics/End scene docks - defense fail.png"; img.style.display = ""; }
   if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
   document.getElementById("egress-outcome-screen").classList.add("active");
 }
@@ -8885,7 +8885,7 @@ function showEgressBreakoutFail(){
     "<p>The governor’s office closed the evacuation window at dawn. The naval cordon received updated orders.</p>" +
     "<p>Crown Harbor is a permanent quarantine zone. What’s left of the city will be studied, documented, and eventually sealed.</p>" +
     "<p>No one asked what happened to the people still inside.</p>";
-  if(img) img.style.display = "none";
+  if(img) { img.src = "Cutscene Graphics/Endscene docks - breakout fails.png"; img.style.display = ""; }
   if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
   document.getElementById("egress-outcome-screen").classList.add("active");
 }
