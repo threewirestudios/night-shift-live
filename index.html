@@ -8902,22 +8902,22 @@ function showEgressOutcome(civTotal){
     if(sub) sub.textContent = "QUARANTINE PASSAGE — AUTHORIZED";
     if(img) { img.src = "Cutscene Graphics/End scene docks - good.png"; img.style.display = ""; }
     if(body) body.innerHTML =
-      “<p>\u201cYou are approaching the quarantine line. Do not proceed. You will be fired upon.\u201d</p>” +
-      “<p>No one turns the ship around.</p>” +
-      “<p>Warning shots screamed overhead\u2026 and then\u2026 stopped. The crew must have seen the hundreds of scared families packed on the deck and decided there had to be another option.</p>” +
-      “<p>The naval channel crackles: \u201cAll passengers remain below deck. Prepare to be boarded. No one disembarks until cleared. Do not attempt outside communication.\u201d</p>” +
-      “<p>There was a tense feeling of relief that washed over those who made it out. They weren\u2019t sure quite what was in store for them, but as Crown Harbor\u2019s skyline disappeared into the fog, they knew they had hope.</p>” +
-      “<p>The ship wouldn\u2019t dock for six months. Six months of testing, retesting, cataloguing, debriefing, and testing again. Even once off ship, there was still more quarantining, more testing, more debriefing, followed by more testing. Not sure when we will finally be released or where to, but we made it out\u2026</p>”;
+      "<p>\u201cYou are approaching the quarantine line. Do not proceed. You will be fired upon.\u201d</p>" +
+      "<p>No one turns the ship around.</p>" +
+      "<p>Warning shots screamed overhead\u2026 and then\u2026 stopped. The crew must have seen the hundreds of scared families packed on the deck and decided there had to be another option.</p>" +
+      "<p>The naval channel crackles: \u201cAll passengers remain below deck. Prepare to be boarded. No one disembarks until cleared. Do not attempt outside communication.\u201d</p>" +
+      "<p>There was a tense feeling of relief that washed over those who made it out. They weren\u2019t sure quite what was in store for them, but as Crown Harbor\u2019s skyline disappeared into the fog, they knew they had hope.</p>" +
+      "<p>The ship wouldn\u2019t dock for six months. Six months of testing, retesting, cataloguing, debriefing, and testing again. Even once off ship, there was still more quarantining, more testing, more debriefing, followed by more testing. Not sure when we will finally be released or where to, but we made it out\u2026</p>";
   } else {
     // Bad ending: convoy intercepted
     if(sub) sub.textContent = "CONVOY INTERCEPTED";
     if(img) { img.src = "Cutscene Graphics/End scene docks - bad.png"; img.style.display = ""; }
     if(body) body.innerHTML =
-      “<p>The naval radio at 08:23: \u201cYou are approaching the quarantine line. Do not proceed. You will be fired upon.\u201d</p>” +
-      “<p>No one turns the ship around.</p>” +
-      “<p>Warning shots screamed overhead first\u2026 then they stopped being warnings.</p>” +
-      “<p>Since so few people were saved, the decks were relatively cleared\u2026 making it easier for the warship crew to carry out their orders.</p>” +
-      “<p>The official report will describe it as a containment measure. The full details will remain classified. When the harbor is eventually rebuilt and the memorials go up, no one will ask who was on that ship, or what they were running from.</p>”;
+      "<p>The naval radio at 08:23: \u201cYou are approaching the quarantine line. Do not proceed. You will be fired upon.\u201d</p>" +
+      "<p>No one turns the ship around.</p>" +
+      "<p>Warning shots screamed overhead first\u2026 then they stopped being warnings.</p>" +
+      "<p>Since so few people were saved, the decks were relatively cleared\u2026 making it easier for the warship crew to carry out their orders.</p>" +
+      "<p>The official report will describe it as a containment measure. The full details will remain classified. When the harbor is eventually rebuilt and the memorials go up, no one will ask who was on that ship, or what they were running from.</p>";
   }
   if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
   document.getElementById("egress-outcome-screen").classList.add("active");
