@@ -530,7 +530,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v1.00</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v1.01</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -1255,6 +1255,28 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
     <div style="font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;margin-bottom:12px;">To Be<br>Continued</div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);max-width:420px;line-height:1.9;margin-bottom:36px;">Crown Harbor's story isn't over.<br>The next chapter is in development.</div>
     <button class="btn-start" onclick="restartGame()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<!-- EGRESS PREBRIEF SCREEN -->
+<div id="egress-prebrief-screen" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;text-align:center;padding:40px 60px;box-sizing:border-box;">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:5px;color:var(--amber);opacity:.85;margin-bottom:20px;border:1px solid rgba(224,152,24,.35);border-left:3px solid var(--amber);padding:5px 14px;display:inline-block;background:rgba(224,152,24,.05);">NIGHT SHIFT: CONTAINMENT</div>
+    <div id="egress-prebrief-title" style="font-family:'Oswald',sans-serif;font-size:38px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;margin-bottom:8px;text-transform:uppercase;">EGRESS PROTOCOL</div>
+    <div id="egress-prebrief-subtitle" style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--amber);margin-bottom:28px;text-transform:uppercase;opacity:.85;"></div>
+    <div id="egress-prebrief-body" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);max-width:520px;line-height:1.9;margin-bottom:36px;text-align:left;"></div>
+    <button id="egress-prebrief-btn" class="btn-start">BEGIN EVACUATION &rarr;</button>
+  </div>
+</div>
+
+<!-- EGRESS OUTCOME SCREEN -->
+<div id="egress-outcome-screen" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;text-align:center;padding:40px 60px;box-sizing:border-box;">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:5px;color:var(--amber);opacity:.85;margin-bottom:20px;border:1px solid rgba(224,152,24,.35);border-left:3px solid var(--amber);padding:5px 14px;display:inline-block;background:rgba(224,152,24,.05);">CROWN HARBOR — EVACUATION OUTCOME</div>
+    <div id="egress-outcome-sub" style="font-family:'Oswald',sans-serif;font-size:34px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;margin-bottom:28px;text-transform:uppercase;"></div>
+    <img id="egress-outcome-img" src="" alt="" style="max-width:540px;width:100%;border:1px solid var(--border2);margin-bottom:28px;display:none;" />
+    <div id="egress-outcome-body" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);max-width:520px;line-height:1.9;margin-bottom:36px;text-align:left;"></div>
+    <button id="egress-outcome-btn" class="btn-start" onclick="restartGame()">PLAY AGAIN</button>
   </div>
 </div>
 
@@ -4709,6 +4731,79 @@ const ITPL_N8 = [
   }
 ];
 
+// ── EGRESS PATH INCIDENT TEMPLATES ───────────────────────────────────────
+// Ship defend: mandatory anchor for the egress shift — the pier must hold
+const ITPL_EGRESS_SHIP = {
+  id:"EGRESS_SHIP", family:"Violence",
+  title:"DEFEND — Docklands Pier",
+  district:"Docklands", severity:5,
+  spawnWeight:999, timeWindow:[1,15],
+  isDefendMission:true, failLoseDistrict:false,
+  _isShipDefend:true,
+  riskDrivers:["ScenarioEscalation"],
+  allowedUnits:["Police","Fire","EMS","PublicWorks"],
+  recommendedUnits:["Police","Fire"],
+  minUnits:1, maxUnits:6,
+  travelSec:[5,10], onSceneSec:[9999,9999],
+  postureModifiers:{
+    Rapid:   {timeMult:.85,limboRisk:.18,fatigue:13},
+    Cautious:{timeMult:1.10,limboRisk:-.06,fatigue:9},
+    Hold:    {timeMult:1.05,limboRisk:-.04,fatigue:5}
+  },
+  commsLines:[
+    {s:"Harbor Command",t:"Dispatch — the pier is under pressure. Every unit you can spare. The ship does NOT leave without your people on it."},
+    {s:"Dispatch",t:"EVACUATION ANCHOR — Docklands Pier. This position must hold. All available units — DEFEND."}
+  ],
+  onArriveLines:[{s:"Harbor Command",t:"Units on-site. Pier secured. Hold it until they’re all aboard."}],
+  humanFailureLines:[], stagedContext:null, stagedAutoResolve:[], wrongUnitLines:[],
+  escalationLines:[], triage:{enabled:false,forced:false,questions:[]},
+  limboBaseChance:0, limboSec:[0,0],
+  failBaseChance:0.0,
+  situation:"Docklands Pier — evacuation point. The infected are pushing toward the waterfront. If this position falls, no one leaves Crown Harbor.",
+  pushOutcome:"Hold the pier. Every position your units maintain buys time for civilians to reach the ships.",
+  holdOutcome:"The pier is lost. No one is leaving Crown Harbor.",
+  successSummary:"Pier holds. Evacuation complete.",
+  failSummary:"Pier overrun. Evacuation cut off.",
+  successFx:{spread:0,legit:0,vol:0},
+  failFx:{spread:0,legit:0,vol:0}
+};
+
+// Breakout mission: mandatory cleanse-style breach to retake Docklands
+const ITPL_BREAKOUT_DOCKLANDS = {
+  id:"BREAKOUT_DOCKLANDS", family:"Violence",
+  title:"BREACH — Docklands Perimeter",
+  district:"Docklands", severity:5,
+  spawnWeight:999, timeWindow:[1,15],
+  isCleanseMission:true,
+  riskDrivers:[],
+  allowedUnits:["Fire"],
+  recommendedUnits:["Fire"],
+  minUnits:1, maxUnits:3,
+  travelSec:[8,15], onSceneSec:[480,600],
+  postureModifiers:{
+    Rapid:   {timeMult:.80,limboRisk:.22,fatigue:18},
+    Cautious:{timeMult:1.20,limboRisk:-.08,fatigue:12},
+    Hold:    {timeMult:1.10,limboRisk:-.05,fatigue:8}
+  },
+  commsLines:[
+    {s:"Dispatch",t:"BREACH ORDER — Docklands. Suppressor unit authorized for forced entry. The pier or nothing."},
+    {s:"Fire3",t:"Copy. Going in."}
+  ],
+  onArriveLines:[{s:"Fire3",t:"Dispatch — on site. Perimeter is heavy. Going to work."}],
+  humanFailureLines:[], stagedContext:null, stagedAutoResolve:[], wrongUnitLines:[],
+  escalationLines:[{s:"Fire3",t:"Dispatch — it’s worse in here than the approach looked. Hold tight."}],
+  triage:{enabled:false,forced:false,questions:[]},
+  limboBaseChance:.15, limboSec:[40,80],
+  failBaseChance:.35,
+  situation:"Docklands — district lost. Suppressor required to breach the infected perimeter and clear a path to the evacuation pier.",
+  pushOutcome:"Push through. If the Suppressor doesn’t clear Docklands tonight, no one leaves.",
+  holdOutcome:"Abort. The perimeter held. No path to the pier.",
+  successSummary:"Perimeter breached. Docklands clear — evacuation route open.",
+  failSummary:"Breach failed. Docklands perimeter held. Evacuation impossible.",
+  successFx:{spread:0,legit:2,vol:0},
+  failFx:{spread:1,legit:-2,vol:1}
+};
+
 // ── TEMPLATE POOL SELECTOR ────────────────────────────
 // Returns the incident templates active for the current night
 function getTemplatesForNight(night) {
@@ -4749,6 +4844,32 @@ function getTemplatesForNight(night) {
       if(t.district === "__LIBERATED__") return {...t, district: liberated};
       return t;
     });
+  }
+  // Egress path: breakout night (night 11 when Docklands was lost)
+  if(CARRY._egressPath && CARRY._egressBreakout && night === 11) {
+    const hq = CARRY.hqDistrict || "Oldstone";
+    const liberated = Object.keys(DISTRICT_ADJACENCY).find(d =>
+      d !== hq && d !== "Civic Core" && (!CARRY.lostDistricts || !CARRY.lostDistricts.has(d))
+    ) || hq;
+    const _chaos = ITPL_N8.slice(0,4).map(t => {
+      if(t.district === "__HQ__") return {...t, district:hq};
+      if(t.district === "__LIBERATED__") return {...t, district:liberated};
+      return t;
+    });
+    return [ITPL_BREAKOUT_DOCKLANDS, ..._chaos];
+  }
+  // Egress path: evacuation shift (night 11 if Docklands held, night 12 after breakout)
+  if(CARRY._egressPath && !CARRY._egressBreakout && (night === 11 || night === 12)) {
+    const hq = CARRY.hqDistrict || "Oldstone";
+    const liberated = Object.keys(DISTRICT_ADJACENCY).find(d =>
+      d !== hq && d !== "Civic Core" && (!CARRY.lostDistricts || !CARRY.lostDistricts.has(d))
+    ) || hq;
+    const _base = ITPL_N8.map(t => {
+      if(t.district === "__HQ__") return {...t, district:hq};
+      if(t.district === "__LIBERATED__") return {...t, district:liberated};
+      return t;
+    });
+    return [ITPL_EGRESS_SHIP, ..._base, ..._getProceduralDefendTemplates(night)];
   }
   // Night 8+: base ITPL_N8 (with district substitution) + procedural district defends
   {
@@ -5172,7 +5293,13 @@ function startNight(night){
       }, 2000);
     }
   }
-    // Reapply lost district visuals from previous nights
+    // Egress path: set mode flags and initialize civilian counter
+  if(CARRY._egressPath && !CARRY._egressBreakout) {
+    G._egressMode = true;
+    if(CARRY.civiliansEvacuated === undefined) CARRY.civiliansEvacuated = 0;
+    CARRY._shipHeld = false;
+  }
+  // Reapply lost district visuals from previous nights
   setTimeout(reapplyLostDistricts, 500);
   // Reapply HQ marker position if already relocated
   if(CARRY.hqRelocated && CARRY.hqDistrict) setTimeout(()=>moveHQMarker(CARRY.hqDistrict), 600);
@@ -5190,6 +5317,8 @@ function startNight(night){
 
 function showNightOpeningComms(night){
   const nightLabels = {1:"Night 1 — Standard Shift",2:"Night 2 — Elevated Alert",3:"Night 3 — Emergency Protocol Active",4:"Night 4 — Emergency Relocation Protocol",5:"Night 5 — Last District Standing",6:"Night 6 — Beachhead",7:"Night 7 — Souvenir Shopping"};
+  if(CARRY._egressPath && CARRY._egressBreakout) nightLabels[night] = "Night "+night+" — Breakout";
+  else if(CARRY._egressPath) nightLabels[night] = "Night "+night+" — Egress Protocol";
   const notes = {
     1:"Day shift flag: Expected heavier activity tonight.",
     2:"Supervisor: Unusual call patterns overnight. All units briefed. Eyes open.",
@@ -5261,10 +5390,22 @@ function tick(){
         // Exhaustion: pool hits 0 — overrun
         if(totalPool <= 0 && !i._defendExhausted){
           i._defendExhausted = true;
+          if(G._egressMode && i.isDefendMission && !i._isShipDefend) {
+            // Zero out civilians this position had accumulated — overrun, no escort possible
+            const _lost = Math.floor(i._civAccum || 0);
+            i._civAccum = 0;
+            if(_lost > 0) comm("alert", "✖ "+_lost+" civilians couldn’t get out — "+i.district+" position overrun.");
+          }
           i.timerMs = 0; // force resolution on next tick
         }
         // Med Row lockdown: no timer win — only drains out or player falls back
         if(i.isMedRowLockdown) i.timerMs = Math.max(1, i.timerMs); // never resolve via timer
+        // Egress mode: all defend missions run until player withdraws or fatigue — no timer expiry
+        if(G._egressMode && i.isDefendMission) i.timerMs = Math.max(1, i.timerMs);
+        // Egress mode: accumulate civilians per game-minute held (credited on withdrawal)
+        if(G._egressMode && i.isDefendMission && !i._isShipDefend && !i._defendExhausted) {
+          i._civAccum = (i._civAccum || 0) + dt * 0.5; // 0.5 civilians per game-minute
+        }
       }
       // Cleanse missions: drain all assigned units — speed-independent (uses dt), divided by unit count
       if(i.isCleanseMission) {
@@ -6293,6 +6434,12 @@ function resolve(i){
           comm("alert", "⚠ HQ PERIMETER LOST — COMMAND POST OVERRUN. ALL UNITS STAND DOWN.");
           setTimeout(()=>{ G.legit = 0; checkFired(); }, 2500);
         }, 3000);
+      // Egress ship defend fail = evacuation over
+      } else if(i._isShipDefend) {
+        setTimeout(()=>{
+          comm("alert", "⚠ DOCKLANDS PIER LOST — THE SHIP IS GONE. EVACUATION FAILED.");
+          setTimeout(()=>triggerEgressShipFail(), 2500);
+        }, 3000);
       } else {
         // All other defend failures permanently lose the district
         setTimeout(()=>markDistrictLost(i.district), 3000);
@@ -7087,6 +7234,15 @@ function doStagedCall(choice) {
           CARRY.collectedDistricts.add(i.district);
         } else {
           comm("alert", "✖ "+i.title+" — units withdrew. "+i.district+" not held.");
+          // Egress mode: credit accumulated civilians on successful withdrawal
+          if(G._egressMode && i.isDefendMission && !i._isShipDefend) {
+            const _civCredit = Math.floor(i._civAccum || 0);
+            if(!CARRY.civiliansEvacuated) CARRY.civiliansEvacuated = 0;
+            CARRY.civiliansEvacuated += _civCredit;
+            if(_civCredit > 0) {
+              setTimeout(()=>comm("success", "✔ "+_civCredit+" civilians escorted to the pier from "+i.district+". Total: "+CARRY.civiliansEvacuated+"."), 1500);
+            }
+          }
         }
         if(!G.debriefFlags) G.debriefFlags=[];
         G.debriefFlags.push({title:i.title, district:i.district, reason: i.isCleanseMission ? "Cleanse operation aborted. Player ordered Suppressor to fall back." : i.isFortifyMission ? "Fortify stood down by player order." : i.isCollectionMission ? "Collection withdrawn. Specialist pulled back — research teams cleared the sector." : i.isAugmentMission ? "Augment stood down by player order. District comms returned to normal." : "Player ordered retreat. Units pulled back before position failed."});
@@ -7716,6 +7872,60 @@ function fireCommsHubFall() {
 // ── END SHIFT ─────────────────────────────────────────
 function endShift(){
   clearInterval(loop);
+
+  // Egress path: breakout shift end (Night 11 with _egressBreakout flag)
+  if(CARRY._egressPath && CARRY._egressBreakout) {
+    const _docksRetaken = !(CARRY.lostDistricts && CARRY.lostDistricts.has("Docklands"));
+    if(_docksRetaken) {
+      // Breakout succeeded — clear flag, route to egress prebrief for night 12
+      CARRY._egressBreakout = false;
+      comm("system","── DOCKLANDS SECURED — EVACUATION ROUTE OPEN ──");
+      setTimeout(()=>{
+        comm("success","Harbor Command: The pier is accessible. Get your people moving. One more shift.");
+        setTimeout(()=>showEgressPrebrief(12), 3500);
+      }, 800);
+    } else {
+      // Breakout failed — evacuation impossible
+      CARRY._egressBreakout = false;
+      comm("system","── BREAKOUT FAILED — EVACUATION IMPOSSIBLE ──");
+      setTimeout(()=>{
+        comm("alert","Harbor Command: Docklands never opened. The window is gone. Crown Harbor stays sealed.");
+        setTimeout(()=>showEgressBreakoutFail(), 3500);
+      }, 800);
+    }
+    return;
+  }
+
+  // Egress path: evacuation shift end
+  if(CARRY._egressPath && !CARRY._egressBreakout) {
+    // Check if ship defend is still active (still holding) — count its civilians too
+    const _shipInc = G.incidents.find(i => i._isShipDefend && i.status === "OnScene");
+    if(_shipInc) {
+      // Ship held to end of shift — credit its civilians and the shift itself
+      const _shipCiv = 0; // ship defend doesn't generate civilians — it's the exit point
+      CARRY._shipHeld = true;
+    } else {
+      // Ship defend already resolved (player withdrew or it fell earlier)
+      const _shipWasHeld = CARRY._shipHeld;
+      if(!_shipWasHeld && !G.incidents.find(i => i._isShipDefend)) {
+        // Ship defend was never active or fell — check if game over was already triggered
+        // (if triggerEgressShipFail was called, we won't reach here — guard either way)
+      }
+    }
+    if(!CARRY._shipHeld) {
+      // Ship fell mid-shift and triggerEgressShipFail should have fired — but just in case
+      setTimeout(()=>triggerEgressShipFail(), 500);
+      return;
+    }
+    const _civTotal = CARRY.civiliansEvacuated || 0;
+    comm("system","── EVACUATION COMPLETE — SHIFT ENDED ──");
+    setTimeout(()=>{
+      comm("system","Harbor Command: The ships are loaded. Convoy is moving. "+_civTotal+" civilians aboard.");
+      setTimeout(()=>showEgressOutcome(_civTotal), 4000);
+    }, 800);
+    return;
+  }
+
   // Night 5 fail: no cleanse completed = campaign over
   if(G.night === 5 && !G._cleanseCompletedN6) {
     triggerN6GameOver("nocleanse");
@@ -8493,8 +8703,10 @@ function showSleepScreen(){
     document.getElementById("game-screen").classList.remove("active");
     document.getElementById("debrief-modal").classList.remove("open");
     if(_sCount >= _sTarget) {
+      CARRY._researchWinPath = true;
       showResearchWin();
     } else {
+      CARRY._egressPath = true;
       showDocksEgress();
     }
     return;
@@ -8583,9 +8795,125 @@ function showResearchWin(){
 }
 
 function showDocksEgress(){
-  // TODO: Replace with full Docks egress path (civilian evacuation / minor win ending)
-  // Triggered when no Specialist is in the field entering Night 7 — research path closed
-  showComingSoon();
+  // Route based on whether Docklands is currently controlled
+  const _docksLost = CARRY.lostDistricts && CARRY.lostDistricts.has("Docklands");
+  if(_docksLost) {
+    // Player needs to fight through to the pier first
+    CARRY._egressBreakout = true;
+    showBreakoutPrebrief();
+  } else {
+    showEgressPrebrief(11);
+  }
+}
+
+function showBreakoutPrebrief(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById("egress-prebrief-screen");
+  if(!el) return;
+  document.getElementById("egress-prebrief-title").textContent = "NIGHT 11 — BREAKOUT";
+  document.getElementById("egress-prebrief-subtitle").textContent = "DOCKLANDS LOST — EVACUATION ROUTE CUT";
+  document.getElementById("egress-prebrief-body").innerHTML =
+    "<p>The research window is closed. The quarantine holds. The governor’s office authorized one conditional evacuation window — but the route to the pier is gone.</p>" +
+    "<p>Your Suppressor knows that perimeter. One shift. Clear Docklands and fight through to the pier before dawn, and the window is still open. Your units can still get people out.</p>" +
+    "<p>If Docklands isn’t retaken by end of shift — Crown Harbor stays locked down. Permanently.</p>";
+  document.getElementById("egress-prebrief-btn").textContent = "BEGIN BREAKOUT →";
+  document.getElementById("egress-prebrief-btn").onclick = ()=>startBreakoutShift();
+  el.classList.add("active");
+}
+
+function showEgressPrebrief(egressNight){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById("egress-prebrief-screen");
+  if(!el) return;
+  document.getElementById("egress-prebrief-title").textContent = "NIGHT "+egressNight+" — EGRESS PROTOCOL";
+  document.getElementById("egress-prebrief-subtitle").textContent = "EVACUATION ORDER — CROWN HARBOR";
+  document.getElementById("egress-prebrief-body").innerHTML =
+    "<p>The research window is closed. The governor’s office has authorized a conditional evacuation from Docklands Pier — if your people reach the ships before dawn, they may be permitted to cross the quarantine line.</p>" +
+    "<p>This is not a rescue. This is a negotiation.</p>" +
+    "<p>Hold your districts. Every hour your units hold a position, more civilians make it through the gap to the pier. But when the time comes — pull your people back. Every unit that doesn’t reach that ship stays behind. And every civilian they were covering stays behind with them.</p>" +
+    "<p>The ship defend in Docklands must hold through end of shift. If the pier falls, the evacuation is over.</p>" +
+    "<p>Crown Harbor 911 — one last shift.</p>";
+  document.getElementById("egress-prebrief-btn").textContent = "BEGIN EVACUATION →";
+  document.getElementById("egress-prebrief-btn").onclick = ()=>startEgressShift(egressNight);
+  el.classList.add("active");
+}
+
+function startBreakoutShift(){
+  document.getElementById("egress-prebrief-screen").classList.remove("active");
+  startNight(11);
+}
+
+function startEgressShift(egressNight){
+  document.getElementById("egress-prebrief-screen").classList.remove("active");
+  startNight(egressNight);
+}
+
+function triggerEgressShipFail(){
+  clearInterval(loop);
+  G.debriefDone = true;
+  document.getElementById("game-screen").classList.remove("active");
+  document.getElementById("debrief-modal").classList.remove("open");
+  const sub = document.getElementById("egress-outcome-sub");
+  const body = document.getElementById("egress-outcome-body");
+  const img = document.getElementById("egress-outcome-img");
+  const btn = document.getElementById("egress-outcome-btn");
+  if(sub) sub.textContent = "EVACUATION FAILED — PIER LOST";
+  if(body) body.innerHTML =
+    "<p>The infected pushed through the Docklands perimeter before the last civilians could board. The harbor went quiet.</p>" +
+    "<p>There are no more ships. There is no more window. The quarantine line isn’t a problem anymore — no one is getting close enough to test it.</p>" +
+    "<p>Crown Harbor’s story ends here.</p>";
+  if(img) img.style.display = "none";
+  if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
+  document.getElementById("egress-outcome-screen").classList.add("active");
+}
+
+function showEgressBreakoutFail(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const sub = document.getElementById("egress-outcome-sub");
+  const body = document.getElementById("egress-outcome-body");
+  const img = document.getElementById("egress-outcome-img");
+  const btn = document.getElementById("egress-outcome-btn");
+  if(sub) sub.textContent = "BREAKOUT FAILED — EVACUATION IMPOSSIBLE";
+  if(body) body.innerHTML =
+    "<p>Docklands held against everything you sent. The perimeter never broke. The pier was never accessible.</p>" +
+    "<p>The governor’s office closed the evacuation window at dawn. The naval cordon received updated orders.</p>" +
+    "<p>Crown Harbor is a permanent quarantine zone. What’s left of the city will be studied, documented, and eventually sealed.</p>" +
+    "<p>No one asked what happened to the people still inside.</p>";
+  if(img) img.style.display = "none";
+  if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
+  document.getElementById("egress-outcome-screen").classList.add("active");
+}
+
+function showEgressOutcome(civTotal){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const CIV_TARGET = 400;
+  const sub = document.getElementById("egress-outcome-sub");
+  const body = document.getElementById("egress-outcome-body");
+  const img = document.getElementById("egress-outcome-img");
+  const btn = document.getElementById("egress-outcome-btn");
+  if(civTotal >= CIV_TARGET) {
+    // Good ending: quarantine passage authorized
+    if(sub) sub.textContent = "QUARANTINE PASSAGE — AUTHORIZED";
+    if(img) { img.src = ""; img.style.display = "none"; img.dataset.endingType = "egress_good"; }
+    if(body) body.innerHTML =
+      "<p>The convoy reaches the quarantine line at 08:17.</p>" +
+      "<p>The admiral’s voice over the naval frequency: “We count "+civTotal+". Manifest is confirmed. All persons will be quarantined — minimum ninety days, no exceptions. Medical teams will board before anyone disembarks.” A pause. “But you’re through.”</p>" +
+      "<p>The ships won’t dock anywhere for three months. Every person aboard will be tested, re-tested, and tested again. No one will be easy to reach and no one will be comfortable.</p>" +
+      "<p>But the gray line of Crown Harbor’s skyline shrinks in the fog behind you. Then it disappears.</p>" +
+      "<p>You made it out.</p>";
+  } else {
+    // Bad ending: convoy intercepted
+    if(sub) sub.textContent = "CONVOY INTERCEPTED";
+    if(img) { img.src = ""; img.style.display = "none"; img.dataset.endingType = "egress_bad"; }
+    if(body) body.innerHTML =
+      "<p>The naval radio at 08:23: “We’ve reviewed the manifest. That number does not meet the minimum threshold. You are instructed to return to port. Do not approach the quarantine line.”</p>" +
+      "<p>No one on that ship is going back to port.</p>" +
+      "<p>At 08:41, the naval cordon fires two rounds across the bow. A warning. At 08:54, they stop warning.</p>" +
+      "<p>The official report will describe it as a containment measure. The full details will remain classified for twenty-five years. When the harbor is eventually rebuilt and the memorials go up, no one will ask who was on those ships, or what they were running from.</p>" +
+      "<p>Crown Harbor held out longer than anyone expected.</p>";
+  }
+  if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
+  document.getElementById("egress-outcome-screen").classList.add("active");
 }
 
 function showComingSoon(){
@@ -10050,12 +10378,26 @@ function topBar(){
   const cov=G.spread<2?"STABLE":G.spread<4?"STRAINED":"DEGRADED";
   const ce=document.getElementById("tb-cov"); ce.textContent=cov; ce.style.color=G.spread<2?"var(--green)":G.spread<4?"var(--amber)":"var(--red)";
 
-  // ── Sample counter (Night 8+) ──
+  // ── Sample counter (Night 8+) / Civilian counter (egress shift) ──
   const _sampEl  = document.getElementById("tba-samples");
   const _sampSep = document.getElementById("tb-sep-samples");
-  if(G.night >= 8) {
+  const _sampLblEl = _sampEl ? _sampEl.querySelector(".tb-label") : null;
+  if(G._egressMode) {
+    // Egress shift: show civilian evacuation counter instead of specimen count
     if(_sampEl)  _sampEl.style.display  = "flex";
     if(_sampSep) _sampSep.style.display = "";
+    if(_sampLblEl) _sampLblEl.textContent = "Evacuated";
+    const _civTotal = CARRY.civiliansEvacuated || 0;
+    const _civTarget = 400;
+    const _sEl = document.getElementById("tb-samples");
+    if(_sEl) {
+      _sEl.textContent = _civTotal + " / " + _civTarget;
+      _sEl.style.color = _civTotal >= _civTarget ? "var(--green)" : _civTotal >= _civTarget * 0.6 ? "var(--amber)" : "var(--red)";
+    }
+  } else if(G.night >= 8) {
+    if(_sampEl)  _sampEl.style.display  = "flex";
+    if(_sampSep) _sampSep.style.display = "";
+    if(_sampLblEl) _sampLblEl.textContent = "Specimens";
     const _sCount  = CARRY.collectionCount || 0;
     const _sTarget = (CARRY.lostDistricts && !CARRY.lostDistricts.has("Med Row")) ? 5 : 6;
     const _sEl = document.getElementById("tb-samples");
