@@ -8894,7 +8894,7 @@ function showEgressOutcome(civTotal){
   if(civTotal >= CIV_TARGET) {
     // Good ending: quarantine passage authorized
     if(sub) sub.textContent = "QUARANTINE PASSAGE — AUTHORIZED";
-    if(img) { img.src = ""; img.style.display = "none"; img.dataset.endingType = "egress_good"; }
+    if(img) { img.src = "Cutscene Graphics/End scene docks - good.png"; img.style.display = ""; }
     if(body) body.innerHTML =
       "<p>The convoy reaches the quarantine line at 08:17.</p>" +
       "<p>The admiral’s voice over the naval frequency: “We count "+civTotal+". Manifest is confirmed. All persons will be quarantined — minimum ninety days, no exceptions. Medical teams will board before anyone disembarks.” A pause. “But you’re through.”</p>" +
@@ -8904,7 +8904,7 @@ function showEgressOutcome(civTotal){
   } else {
     // Bad ending: convoy intercepted
     if(sub) sub.textContent = "CONVOY INTERCEPTED";
-    if(img) { img.src = ""; img.style.display = "none"; img.dataset.endingType = "egress_bad"; }
+    if(img) { img.src = "Cutscene Graphics/End scene docks - bad.png"; img.style.display = ""; }
     if(body) body.innerHTML =
       "<p>The naval radio at 08:23: “We’ve reviewed the manifest. That number does not meet the minimum threshold. You are instructed to return to port. Do not approach the quarantine line.”</p>" +
       "<p>No one on that ship is going back to port.</p>" +
