@@ -4750,7 +4750,107 @@ function getTemplatesForNight(night) {
       return t;
     });
   }
-  return ITPL_N8; // fallback for night 8+
+  // Night 8+: base ITPL_N8 (with district substitution) + procedural district defends
+  {
+    const hq = CARRY.hqDistrict || "Oldstone";
+    const liberated = Object.keys(DISTRICT_ADJACENCY).find(d =>
+      d !== hq && d !== "Civic Core" &&
+      (!CARRY.lostDistricts || !CARRY.lostDistricts.has(d))
+    ) || hq;
+    const _base = ITPL_N8.map(t => {
+      if(t.district === "__HQ__")         return {...t, district: hq};
+      if(t.district === "__LIBERATED__")  return {...t, district: liberated};
+      return t;
+    });
+    return [..._base, ..._getProceduralDefendTemplates(night)];
+  }
+}
+
+// ── PROCEDURAL DEFEND SPAWNING (Night 8+) ──────────────────────────────────
+// For each controlled non-HQ district, generate a defend template weighted by
+// the threat level of bordering lost districts.
+// Civic Core lost = weight 3 (super-spreader), all other lost = weight 1.
+// Base rate applies to all controlled districts (sewer/underground exposure).
+function _getProceduralDefendTemplates(night) {
+  if(!CARRY || !CARRY.lostDistricts || !CARRY.hqDistrict) return [];
+  const hq = CARRY.hqDistrict;
+  const templates = [];
+
+  // Time slots spread across the shift
+  const _timeSlots = [[55,115],[150,225],[280,360],[405,455]];
+  let _slot = 0;
+
+  const _controlled = Object.keys(DISTRICT_ADJACENCY).filter(d =>
+    d !== "Civic Core" &&
+    d !== hq &&
+    (!CARRY.lostDistricts || !CARRY.lostDistricts.has(d))
+  );
+
+  _controlled.forEach(district => {
+    const _neighbors = DISTRICT_ADJACENCY[district] || [];
+    const _lostNeighbors = _neighbors.filter(n =>
+      CARRY.lostDistricts && CARRY.lostDistricts.has(n)
+    );
+
+    // Weighted threat score
+    let _threat = 0;
+    _lostNeighbors.forEach(n => {
+      _threat += (n === "Civic Core") ? 3 : 1;
+    });
+
+    // Spawn probability: base rate + per-threat-weight bonus
+    const BASE_RATE  = 0.12;
+    const WEIGHT_MOD = 0.16;
+    const _spawnP = Math.min(BASE_RATE + _threat * WEIGHT_MOD, 0.88);
+
+    const _slot_range = _timeSlots[_slot % _timeSlots.length];
+    _slot++;
+
+    const _highThreat = _threat >= 3;
+    const _flavorEntry = _lostNeighbors.length
+      ? _lostNeighbors.join(", ") + (" is" + (_lostNeighbors.length > 1 ? "" : "") + " lost — being used as a staging ground.")
+      : "Approach came through the sewers — underground infrastructure compromise.";
+
+    templates.push({
+      id: "PROC_DEF_N"+night+"_"+district.replace(/ /g,"_"),
+      family: "Violence",
+      title: "DEFEND — Incursion, "+district,
+      district: district,
+      severity: _highThreat ? 4 : 3,
+      spawnWeight: _spawnP,
+      timeWindow: [_slot_range[0], _slot_range[1]],
+      isDefendMission: true, failLoseDistrict: true,
+      riskDrivers: ["ScenarioEscalation"],
+      allowedUnits: ["Police","Fire","EMS","PublicWorks"],
+      recommendedUnits: ["Police","Fire"],
+      minUnits: 1, maxUnits: 4,
+      travelSec: [12, 22], onSceneSec: [440, 570],
+      postureModifiers: {
+        Rapid:   {timeMult:.85, limboRisk:.18, fatigue:13},
+        Cautious:{timeMult:1.10,limboRisk:-.06,fatigue:9},
+        Hold:    {timeMult:1.05,limboRisk:-.04,fatigue:5}
+      },
+      commsLines: [
+        {s:"Police Supervisor", t:"Dispatch — contact at "+district+". Organized push on the perimeter. We need the line now — DEFEND."},
+        {s:"Dispatch",          t:"DEFEND MISSION — "+district.toUpperCase()+". Incursion in progress. Respond immediately."}
+      ],
+      onArriveLines: [{s:"Police1", t:"On site — "+district+". Perimeter set. Waiting for your call."}],
+      humanFailureLines:[], stagedContext:null, stagedAutoResolve:[], wrongUnitLines:[],
+      escalationLines:[],
+      triage:{enabled:false,forced:false,questions:[]},
+      limboBaseChance:0, limboSec:[0,0],
+      failBaseChance: _highThreat ? 0.27 : 0.20,
+      situation: district+" under pressure. "+_flavorEntry,
+      pushOutcome: "Hold "+district+". Repel the incursion.",
+      holdOutcome: "Fall back. "+district+" is lost.",
+      successSummary: "Incursion repelled. "+district+" holds.",
+      failSummary: "Perimeter failed. "+district+" is lost.",
+      successFx:{spread:0,legit:2,vol:0},
+      failFx:{spread:1,legit:-2,vol:1}
+    });
+  });
+
+  return templates;
 }
 
 // Pick pool incidents to schedule for the shift
