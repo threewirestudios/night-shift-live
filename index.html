@@ -8146,16 +8146,15 @@ function showDebrief(){
     buls.push({t:"Night 6 closed. Recovery phase active — research teams on the ground.",f:false});
     const emsReady = G.units.find(u=>u.type==="EMS"&&!u.isEvolved&&!u.isSuppressor&&u.id!==(CARRY.evolvedEMSUnit||"")&&(u.xp||0)>=10);
     if(emsReady)
-      buls.push({t:emsReady.id+" — Specialist threshold reached. Evolution available.",f:false});
+      buls.push({t:emsReady.id+" — Specialist threshold reached. Natural evolution queued for debrief.",f:false});
     else
-      buls.push({t:"No EMS unit at Specialist threshold yet. Research support capacity limited going into Night 7.",f:true});
+      buls.push({t:"No Paramedic at threshold yet — Specialist certification offered in debrief. Collection ops unlock Night 7.",f:false});
   }
   if(night===5) {
     buls.push({t:"Night 5 closed. Crown Harbor: one district standing. Suppressor unit active in roster.",f:false});
     if(CARRY.lostDistricts && CARRY.lostDistricts.size < Object.keys(DC).length - 1)
       buls.push({t:"District reclaimed this shift — cleanse operation successful.",f:false});
-    if(CARRY.evolvedPolice)
-      buls.push({t:"Police unit evolution — Fortify Protocol authorized. First evolution recorded.",f:false});
+
   }
 
   document.getElementById("db-bullets").innerHTML =
