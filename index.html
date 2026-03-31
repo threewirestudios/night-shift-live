@@ -8896,21 +8896,23 @@ function showEgressOutcome(civTotal){
     if(sub) sub.textContent = "QUARANTINE PASSAGE — AUTHORIZED";
     if(img) { img.src = "Cutscene Graphics/End scene docks - good.png"; img.style.display = ""; }
     if(body) body.innerHTML =
-      "<p>The convoy reaches the quarantine line at 08:17.</p>" +
-      "<p>The admiral’s voice over the naval frequency: “We count "+civTotal+". Manifest is confirmed. All persons will be quarantined — minimum ninety days, no exceptions. Medical teams will board before anyone disembarks.” A pause. “But you’re through.”</p>" +
-      "<p>The ships won’t dock anywhere for three months. Every person aboard will be tested, re-tested, and tested again. No one will be easy to reach and no one will be comfortable.</p>" +
-      "<p>But the gray line of Crown Harbor’s skyline shrinks in the fog behind you. Then it disappears.</p>" +
-      "<p>You made it out.</p>";
+      “<p>The convoy reaches the quarantine line at 08:17.</p>” +
+      “<p>A long silence on the naval frequency. Then the sound of people — hundreds of them — crowding the rails. Faces. Children. People who had no business still being alive.</p>” +
+      “<p>The channel crackles: \u201cAll passengers remain below deck. Medical teams will board at 08:45. No one disembarks until cleared. Do not attempt outside communication.\u201d</p>” +
+      “<p>No one said you were through. No one had to.</p>” +
+      “<p>The ship won\u2019t dock anywhere for six months. Every person aboard will be tested, re-tested, catalogued, and tested again. The vessel is already a laboratory \u2014 it was one before the gangway lifted.</p>” +
+      “<p>Crown Harbor\u2019s skyline shrinks into the fog behind you. Then it disappears.</p>” +
+      “<p>You made it out.</p>”;
   } else {
     // Bad ending: convoy intercepted
     if(sub) sub.textContent = "CONVOY INTERCEPTED";
     if(img) { img.src = "Cutscene Graphics/End scene docks - bad.png"; img.style.display = ""; }
     if(body) body.innerHTML =
-      "<p>The naval radio at 08:23: “We’ve reviewed the manifest. That number does not meet the minimum threshold. You are instructed to return to port. Do not approach the quarantine line.”</p>" +
-      "<p>No one on that ship is going back to port.</p>" +
-      "<p>At 08:41, the naval cordon fires two rounds across the bow. A warning. At 08:54, they stop warning.</p>" +
-      "<p>The official report will describe it as a containment measure. The full details will remain classified for twenty-five years. When the harbor is eventually rebuilt and the memorials go up, no one will ask who was on those ships, or what they were running from.</p>" +
-      "<p>Crown Harbor held out longer than anyone expected.</p>";
+      “<p>The naval radio at 08:23: \u201cYou are approaching the quarantine line. Do not proceed. You will be fired upon.\u201d</p>” +
+      “<p>No one turns the ship around.</p>” +
+      “<p>Warning shots at 08:41. At 08:54, they stop warning.</p>” +
+      “<p>The official report will describe it as a containment measure. The full details will remain classified. When the harbor is eventually rebuilt and the memorials go up, no one will ask who was on that ship, or what they were running from.</p>” +
+      “<p>The decks were relatively clear \u2014 we\u2019d left so many people behind. Must have made it easier for the crew to open fire.</p>”;
   }
   if(btn) { btn.textContent = "PLAY AGAIN"; btn.onclick = restartGame; }
   document.getElementById("egress-outcome-screen").classList.add("active");
