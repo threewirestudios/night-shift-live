@@ -8704,6 +8704,27 @@ const CUTSCENE_DATA = {
     tag: "CROWN HARBOR \u2014 SHORTWAVE \u2014 DAY 7 \u2014 06:31",
     headline: "Momentum",
     body: "Two districts reclaimed in two nights and stage one of the plan complete. There is now real hope starting to grow of saving the city.\n\nThe research teams are up and running. They moved fast \u2014 assessed the situation, got organized, and had questions by 0530. Good questions....almost too good. They were the kind of questions that suggest they\u2019ve been thinking about this longer than we have. What they need now are specimens. Live if possible. Dead if not. Somewhere in between if that\u2019s what\u2019s available \u2014 and they were ominously specific about that last part. Best not to think about it.\n\nBack on the headset at 22:00."
+  },
+  // Night 7 → 8: Reyes in the lab, first samples in
+  7: {
+    img: "Cutscene Graphics/Cutscene Night 7-8, 8-9, 9-10.png",
+    tag: "CROWN HARBOR — RESEARCH LAB — DAY 8 — 04:17",
+    headline: "First Samples",
+    body: "Reyes hasn’t left the lab since the first specimens came in. She has what she needs to start. Whether it’s enough — that’s tonight’s question."
+  },
+  // Night 8 → 9: window compressing
+  8: {
+    img: "Cutscene Graphics/Cutscene Night 7-8, 8-9, 9-10.png",
+    tag: "CROWN HARBOR — RESEARCH LAB — DAY 9 — 04:41",
+    headline: "The Window",
+    body: "The model updated again overnight. The mutation is moving faster than Reyes projected. She’s still working. So are you."
+  },
+  // Night 9 → 10: last night before the verdict
+  9: {
+    img: "Cutscene Graphics/Cutscene Night 7-8, 8-9, 9-10.png",
+    tag: "CROWN HARBOR — RESEARCH LAB — DAY 10 — 04:58",
+    headline: "One More Night",
+    body: "Reyes will have an answer by dawn. Whatever count you bring in tonight is the number she works with. Make it count."
   }
 };
 
@@ -8743,7 +8764,7 @@ function showSleepScreen(){
   if(CUTSCENE_DATA[night]) {
     document.getElementById("game-screen").classList.remove("active");
     document.getElementById("debrief-modal").classList.remove("open");
-    showCutscene(night, ()=>{ if(night === 6 && !CARRY.evolvedEMS){ showDocksEgress(); return; } night+1 > 7 ? showComingSoon() : night+1 >= 6 ? showOpBriefing(night+1) : showTeaser(); });
+    showCutscene(night, ()=>{ if(night === 6 && !CARRY.evolvedEMS){ showDocksEgress(); return; } if(night >= 7 && night <= 9){ showOpBriefing(night+1); return; } night+1 > 7 ? showComingSoon() : night+1 >= 6 ? showOpBriefing(night+1) : showTeaser(); });
     return;
   }
 
