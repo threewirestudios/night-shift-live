@@ -9221,10 +9221,8 @@ function showOpBriefing(nextNight) {
   // ── TONIGHT'S FOCUS ──
   let focusLines = [];
   if(CARRY.evolvedPolice) focusLines.push("Get your Marshal into a Fortify operation early — protect what you hold while you push for the next district.");
-  if(interchangeGone && medRowGone)   focusLines.push("Priority target: Interchange or Med Row. Pick one and push.");
-  else if(!interchangeGone)           focusLines.push("Interchange is yours — push toward Med Row next, or hold and consolidate.");
-  else if(!medRowGone)                focusLines.push("Med Row is yours — push toward Interchange, or hold and consolidate.");
-  else                                focusLines.push("Both priority targets secured. Begin sample collection this shift.");
+  if(interchangeGone && medRowGone)   focusLines.push("Priority target: Interchange or Med Row — you need one. Pick one and commit.");
+  else                                focusLines.push("You have your research foothold. Focus on collection and push your Specialist into every controlled district. Expand where you can — every district you hold is another collection site.");
   document.getElementById("opbrief-focus").innerHTML = focusLines.join("<br>");
 
   // Reset evo section to collapsed
