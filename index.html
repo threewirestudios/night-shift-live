@@ -5360,7 +5360,8 @@ function tick(){
   if(!G || G.spread===undefined || G.debriefDone===undefined) return; // stale interval guard
   // Freeze time while tutorial bubble is visible
   if(G.speed===0 || document.getElementById("tut-overlay").classList.contains("tut-active")) return;
-  const dt=(TICK_MS/1000)*GM_PER_REAL_SEC*G.speed;
+  const _effSpeed = G.mInc ? G.speed * 0.5 : G.speed;
+  const dt=(TICK_MS/1000)*GM_PER_REAL_SEC*_effSpeed;
   G.minute+=dt;
 
   // Spawn from this night's scheduled incidents
@@ -5368,9 +5369,9 @@ function tick(){
 
   // Tick incidents
   [...G.incidents].forEach(i=>{
-    if(i.status==="Traveling"){ i.timerMs-=TICK_MS*G.speed; if(i.timerMs<=0) arrive(i); }
+    if(i.status==="Traveling"){ i.timerMs-=TICK_MS*_effSpeed; if(i.timerMs<=0) arrive(i); }
     else if(i.status==="OnScene"){
-      i.timerMs-=TICK_MS*G.speed;
+      i.timerMs-=TICK_MS*_effSpeed;
       // Defend missions: drain fatigue — speed-independent (uses dt), divided by unit count
       if(i.isDefendMission){
         const unitCount = Math.max(1, i.assignedUnits.filter(uid=>G.units.find(x=>x.id===uid)).length);
@@ -5518,11 +5519,11 @@ function tick(){
     else if(i.status==="Limbo"){
       if(i._darkRunning){
         // RadioSilence: incident timer keeps running — unit is dark but scene plays out
-        i.timerMs-=TICK_MS*G.speed;
+        i.timerMs-=TICK_MS*_effSpeed;
         if(i.timerMs<=0) resolveFromDark(i); // special resolve path for dark incidents
       } else {
         // HumanFailure (STAGED): timer paused, waiting for player action
-        i.limboMs-=TICK_MS*G.speed; if(i.limboMs<=0) exitLimbo(i);
+        i.limboMs-=TICK_MS*_effSpeed; if(i.limboMs<=0) exitLimbo(i);
       }
     }
     else if(i.status==="Pending") tickPending(i, dt);
