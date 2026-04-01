@@ -8834,6 +8834,8 @@ function showCutscene(night, onComplete){
 
   // Auto-advance or wait for player to click Continue
   window._cutsceneCallback = onComplete;
+  const _csBtn = document.getElementById("cutscene-btn");
+  if(_csBtn) _csBtn.style.display = data.autoAdvance ? "none" : "";
   document.getElementById("cutscene-screen").classList.add("active");
   if(data.autoAdvance) {
     if(window._cutsceneAutoTimer) clearTimeout(window._cutsceneAutoTimer);
