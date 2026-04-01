@@ -8716,6 +8716,7 @@ const CUTSCENE_DATA = {
   },
   // Night 7 → 8: Reyes in the lab, first samples in
   7: {
+    autoAdvance: 7000,
     img: "Cutscene Graphics/Cutscene Night 7-8, 8-9, 9-10.png",
     tag: "CROWN HARBOR — RESEARCH LAB — DAY 8 — 04:17",
     headline: "First Samples",
@@ -8723,6 +8724,7 @@ const CUTSCENE_DATA = {
   },
   // Night 8 → 9: window compressing
   8: {
+    autoAdvance: 7000,
     img: "Cutscene Graphics/Cutscene Night 7-8, 8-9, 9-10.png",
     tag: "CROWN HARBOR — RESEARCH LAB — DAY 9 — 04:41",
     headline: "The Window",
@@ -8730,6 +8732,7 @@ const CUTSCENE_DATA = {
   },
   // Night 9 → 10: last night before the verdict
   9: {
+    autoAdvance: 7000,
     img: "Cutscene Graphics/Cutscene Night 7-8, 8-9, 9-10.png",
     tag: "CROWN HARBOR — RESEARCH LAB — DAY 10 — 04:58",
     headline: "One More Night",
@@ -8773,7 +8776,7 @@ function showSleepScreen(){
   if(CUTSCENE_DATA[night]) {
     document.getElementById("game-screen").classList.remove("active");
     document.getElementById("debrief-modal").classList.remove("open");
-    showCutscene(night, ()=>{ if(night === 6 && !CARRY.evolvedEMS){ showDocksEgress(); return; } if(night >= 7 && night <= 9){ showOpBriefing(night+1); return; } night+1 > 7 ? showComingSoon() : night+1 >= 6 ? showOpBriefing(night+1) : showTeaser(); });
+    showCutscene(night, ()=>{ if(night === 6 && !CARRY.evolvedEMS){ showDocksEgress(); return; } if(night >= 7 && night <= 9){ startNight(night+1); return; } night+1 > 7 ? showComingSoon() : night+1 >= 6 ? showOpBriefing(night+1) : showTeaser(); });
     return;
   }
 
@@ -8829,9 +8832,13 @@ function showCutscene(night, onComplete){
   document.getElementById("cutscene-headline").textContent = data.headline;
   document.getElementById("cutscene-body").textContent = data.body;
 
-  // Store callback for when player clicks Continue
+  // Auto-advance or wait for player to click Continue
   window._cutsceneCallback = onComplete;
   document.getElementById("cutscene-screen").classList.add("active");
+  if(data.autoAdvance) {
+    if(window._cutsceneAutoTimer) clearTimeout(window._cutsceneAutoTimer);
+    window._cutsceneAutoTimer = setTimeout(()=>{ window._cutsceneAutoTimer = null; endCutscene(); }, data.autoAdvance);
+  }
 }
 
 function endCutscene(){
