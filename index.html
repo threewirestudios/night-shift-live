@@ -547,7 +547,7 @@ body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text
   <div class="title-scanlines"></div>
   <div class="title-content">
     <div style="width:320px;height:1px;background:linear-gradient(90deg,transparent,rgba(224,152,24,.5),transparent);margin:0 auto 18px;"></div>
-    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v1.16</div>
+    <div style="position:absolute;bottom:14px;right:18px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,255,255,.18);letter-spacing:1px;">Beta v1.17</div>
     <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:400;letter-spacing:3px;margin-bottom:10px;text-transform:uppercase;"><span style="color:#ffffff">Three</span><span style="color:#4ab8c4">wire</span> <span style="color:#ffffff">Studios</span><sup style="font-size:7px;vertical-align:super;color:#ffffff">TM</sup> <span style="color:rgba(255,255,255,0.45)">Presents</span></div>
     <div class="title-main">Night<span>Shift</span></div>
     <div class="title-sub">Containment</div>
@@ -6402,6 +6402,8 @@ function enterGame(night) {
   topBar();
   setTimeout(reapplyLostDistricts, 500);
   if(CARRY.hqRelocated && CARRY.hqDistrict) setTimeout(()=>moveHQMarker(CARRY.hqDistrict), 600);
+  // Research Win — queue mandatory mission for nights 11-14 (mirrors startNight path)
+  if(CARRY._researchWinPath && night >= 11 && night <= 14) _queueResearchMission(night);
   loop = setInterval(tick, TICK_MS);
   applySettings();
   // Fire Night 1 tutorial walkthrough on fresh game start (unless player opted out)
@@ -6563,7 +6565,7 @@ function showNightOpeningComms(night){
 }
 
 function tickSpecimen() {
-  if(G.night < 7) return; // Collection phase: Night 7+
+  if(G.night < 7 || G.night > 10) return; // Collection phase: Night 7–10 only
   if(!G.specimenState) G.specimenState = { district: null, expiresAt: null, nextSpawnAt: null, spawnedThisNight: 0 };
   const ss = G.specimenState;
   // Initialize first spawn window
@@ -6681,6 +6683,26 @@ function tick(){
             if(_lost > 0) comm("alert", "✖ "+_lost+" civilians couldn’t get out — "+i.district+" position overrun.");
           }
           i.timerMs = 0; // force resolution on next tick
+        }
+        // Defend wave contact triggers (elapsed-time based — immune to cascade at any speed)
+        if(i.isDefendMission&&i.stagedResolved&&i.status==="OnScene"){
+          i._missionElapsed=(i._missionElapsed||0)+TICK_MS*_effSpeed;
+          if(i._defendWaveSchedule&&i._defendWaveIdx<i._defendWaveSchedule.length&&!i._defendWaveActive){
+            if(i._missionElapsed>=i._defendWaveSchedule[i._defendWaveIdx]){
+              i._defendWaveIdx++;
+              i._defendWaveActive=true;
+              const _dU=i.assignedUnits[0]||"Unit";
+              const _wc=[
+                _dU+": Dispatch — WAVE INCOMING. Hostiles pressing the perimeter. Need a call NOW.",
+                _dU+": Dispatch — they're rushing us. More than last time. Your order?",
+                _dU+": DISPATCH — BREACH ATTEMPT. We cannot hold this forever. Your call.",
+                _dU+": Dispatch — contact escalating. Hold, fall back, or send more?"
+              ];
+              comm("unit",_wc[Math.floor(Math.random()*_wc.length)]);
+              notif("⚡ Wave contact — "+i.district+" — open card","red");
+              G._activeDefendWave={unit:_dU,district:i.district,incidentId:i.id};
+            }
+          }
         }
         // Med Row lockdown: no timer win — only drains out or player falls back
         if(i.isMedRowLockdown) i.timerMs = Math.max(1, i.timerMs); // never resolve via timer
@@ -6844,6 +6866,30 @@ function tick(){
           }
         }
         if(!i._augmentExhausted) i.timerMs = Math.max(1, i.timerMs); // never expire via countdown
+      }
+      // Cleanse missions with Engineer relay: drain at half augment rate while on scene
+      if(i.isCleanseMission && i._cleanseEngineerId) {
+        const _cEng = G.units.find(x=>x.id===i._cleanseEngineerId && i.assignedUnits.includes(x.id));
+        if(_cEng && _cEng.status==="OnScene") {
+          const _evoMult = EVO_DRAIN_MULT[getUnitEvolutionTier(_cEng)] || 1.0;
+          _cEng.fatigue = Math.max(0, (_cEng.fatigue ?? 30) - (4.5/100) * dt * _evoMult);
+          _cEng.readiness = _cEng.fatigue<=8?"Red":_cEng.fatigue<=14?"Yellow":"Green";
+          if(_cEng.fatigue <= 8 && !i._cleanseEngRedFired) {
+            i._cleanseEngRedFired = true;
+            comm("unit", _cEng.id+": Dispatch — relay is holding but I'm nearly burned out. How much longer?");
+            notif(_cEng.id+" — critical — "+i.district,"red");
+          }
+          if(_cEng.fatigue <= 0 && !i._cleanseEngExhausted) {
+            i._cleanseEngExhausted = true;
+            i._cleanseEngineerId = null;
+            _cEng.status = "Available"; _cEng.assignedTo = null;
+            i.assignedUnits = i.assignedUnits.filter(x=>x!==_cEng.id);
+            comm("unit", _cEng.id+": Dispatch — burned out. Relay is down. Pulling back.");
+            comm("system","Cleanse — "+i.district+": Engineer exhausted — relay offline. Suppressor continuing on standard window.");
+            notif(_cEng.id+" exhausted — relay down","amber");
+            renderUnits();
+          }
+        }
       }
       if(i.timerMs<=0){
         // Defend mission: distinguish exhaustion (fail) from natural timer expiry (success)
@@ -7341,6 +7387,12 @@ function arrive(i){
       i.limboType = "HumanFailure";
       i.stagedResolved = true;
       notif("⚔ Cleanse underway — "+i.district,"purple");
+      // Check for available Engineer — offer relay support
+      const _engAvail = G.units.find(x=>x.id===CARRY.evolvedPWUnit && x.status==="Available");
+      if(_engAvail) {
+        i._engineerSupportAvailable = true;
+        setTimeout(()=>comm("dispatch","Dispatch: "+_engAvail.id+" — engineering relay available. Open the card to deploy support and compress the sweep window."), 900);
+      }
     }, arrDelay + 600);
     renderQueue(); renderUnits();
     return;
@@ -7364,6 +7416,20 @@ function arrive(i){
       i.limboType = "HumanFailure"; // ensures defend panel (fatigue + withdraw) shows when card is opened
       i.stagedResolved = true;      // no forced interaction required — defense auto-started
       notif("⚔ "+dispUnit+" holding "+i.district+" — check card to monitor","amber");
+      // Initialize defend wave schedule (elapsed-time based — cascade-proof)
+      const _wCount = Math.min(3,Math.max(1,Math.floor(Math.random()*3)+1+(i.severity>=4?1:0)));
+      const _wWin = i.onSceneMs||300000;
+      const _wSched = [];
+      for(let _wi=0;_wi<_wCount;_wi++){
+        const _base = (_wWin*0.15)+((_wWin*0.65/_wCount)*_wi);
+        const _jitter = (Math.random()-0.5)*(_wWin*0.08);
+        _wSched.push(Math.max(_wWin*0.1, _base+_jitter));
+      }
+      _wSched.sort((a,b)=>a-b); // ascending elapsed ms — earliest wave fires first
+      i._defendWaveSchedule=_wSched;
+      i._defendWaveIdx=0;
+      i._missionElapsed=0;
+      i._defendWaveActive=false;
     }, arrDelay + 600);
     renderQueue(); renderUnits();
     return;
@@ -7981,7 +8047,7 @@ function resolveFromDark(i){
       G.legit = Math.min(15, Math.max(0, G.legit + adjDelta));
       // XP for dark-resolved success
       if(G.night >= 5) {
-        const _xpGain = i.severity || 1;
+        const _xpGain = (i.severity || 1) + (_districtBonus(i.district).xpMod || 0);
         i.assignedUnits.forEach(uid=>{ const _u=G.units.find(x=>x.id===uid); if(!_u) return; _u.xp=(_u.xp||0)+_xpGain; if(!CARRY.unitXP) CARRY.unitXP={}; CARRY.unitXP[_u.id]=(CARRY.unitXP[_u.id]||0)+_xpGain; });
       }
     }
@@ -7994,7 +8060,51 @@ function resolveFromDark(i){
   }, 2000);
 }
 
+
+// Returns operational modifiers for a controlled district.
+function _districtBonus(district) {
+  if(!district) return {};
+  const lost = CARRY.lostDistricts || new Set();
+  if(lost.has(district)) return {};
+  const bonuses = {
+    "Interchange":  { failMod: 0.06,  trustOnSuccess:  1, trustOnFail:  0, xpMod: 0 },
+    "Riverside":    { failMod: 0,     trustOnSuccess:  0, trustOnFail: -1, xpMod: 1 },
+    "Oldstone":     { failMod: 0.05,  trustOnSuccess:  0, trustOnFail:  0, xpMod: 0 },
+    "Factory Hill": { failMod: 0,     trustOnSuccess:  0, trustOnFail:  0, xpMod: 0, pwFailMod: -0.08, nonPwFailMod: 0.05 },
+    "Docklands":    { failMod: 0,     trustOnSuccess:  0, trustOnFail:  0, xpMod: 0, escortFailMod: -0.08, cleanseFailMod: 0.06 },
+    "Harborline":   { failMod: 0,     trustOnSuccess: -1, trustOnFail:  0, xpMod: 0 },
+    "Foundry Ward": { failMod: 0,     trustOnSuccess: -1, trustOnFail:  0, xpMod: 0, fireFailMod: -0.08 },
+    "Mill Quarter": { failMod: 0.04,  trustOnSuccess:  0, trustOnFail:  0, xpMod: 1 },
+    "Southpoint":   { failMod: 0,     trustOnSuccess:  0, trustOnFail: -1, xpMod: 0, emsFailMod: -0.08 },
+    "Ivy District": { failMod: 0,     trustOnSuccess:  2, trustOnFail: -2, xpMod: 0 },
+  };
+  return bonuses[district] || {};
+}
+
+function _applyDistrictFailMod(i) {
+  const b = _districtBonus(i.district);
+  if(!b || !i.district) return;
+  if(b.failMod) i.failChance = Math.min(0.97, i.failChance + b.failMod);
+  if(b.pwFailMod || b.nonPwFailMod) {
+    const hasPW  = i.assignedUnits.some(uid=>{const u=G.units.find(x=>x.id===uid);return u&&u.type==='PublicWorks';});
+    const hasNon = i.assignedUnits.some(uid=>{const u=G.units.find(x=>x.id===uid);return u&&u.type!=='PublicWorks';});
+    if(hasPW  && b.pwFailMod)    i.failChance = Math.max(0, i.failChance + b.pwFailMod);
+    if(hasNon && b.nonPwFailMod) i.failChance = Math.min(0.97, i.failChance + b.nonPwFailMod);
+  }
+  if(b.escortFailMod  && i.isEscortMission)  i.failChance = Math.max(0, i.failChance + b.escortFailMod);
+  if(b.cleanseFailMod && i.isCleanseMission) i.failChance = Math.min(0.97, i.failChance + b.cleanseFailMod);
+  if(b.fireFailMod) {
+    const hasFire = i.assignedUnits.some(uid=>{const u=G.units.find(x=>x.id===uid);return u&&u.type==='Fire';});
+    if(hasFire) i.failChance = Math.max(0, i.failChance + b.fireFailMod);
+  }
+  if(b.emsFailMod) {
+    const hasEMS = i.assignedUnits.some(uid=>{const u=G.units.find(x=>x.id===uid);return u&&u.type==='EMS';});
+    if(hasEMS) i.failChance = Math.max(0, i.failChance + b.emsFailMod);
+  }
+}
+
 function resolve(i){
+  _applyDistrictFailMod(i);
   const failed=Math.random()<i.failChance;
   if(failed) G.failedCt++; else G.resolvedCt++;
   const fx=(failed?i.failFx:i.successFx)||{};
@@ -8036,6 +8146,12 @@ function resolve(i){
   }
   // HQ defend missions carry no trust impact in either direction
   if(i.noTrustPenalty) { trustDelta = 0; trustReason = ""; }
+  // District trust modifier
+  const _db = _districtBonus(i.district);
+  if(_db && !i.noTrustPenalty) {
+    if(!failed && _db.trustOnSuccess) trustDelta = Math.max(0, trustDelta + _db.trustOnSuccess);
+    if(failed  && _db.trustOnFail)   trustDelta += _db.trustOnFail;
+  }
   const trustBefore = G.legit;
   G.legit = Math.max(0, Math.min(15, G.legit + trustDelta));
 
@@ -8732,6 +8848,27 @@ function buildSituationPanel(i) {
     const reinforceBtn = isDefendMode
       ? `<button class="btn-situation" onclick="doReinforce()" style="border-color:var(--cyan);color:var(--cyan)"><strong>⊕ Reinforce</strong>Send an additional unit to strengthen the defensive position.</button>`
       : "";
+    // Defend wave contact: inject command decision panel
+    if(isDefendMode && i._defendWaveActive) {
+      document.getElementById("m-situation-opts").innerHTML =
+        `<div style="padding:6px 10px;background:rgba(200,30,30,.12);border:1px solid rgba(200,30,30,.4);margin-bottom:10px;font-size:9px;letter-spacing:1px;color:var(--red);">
+          ⚡ WAVE CONTACT — ${i.district.toUpperCase()} — COMMAND DECISION REQUIRED
+        </div>
+        <button class="btn-situation" onclick="doDefendWaveHold()" style="border-color:var(--amber);color:var(--amber)">
+          <strong>⚡ Hold the Line</strong>
+          Absorb the wave. All units take moderate fatigue hit. Position holds — no trust impact.
+        </button>
+        <button class="btn-situation" onclick="doDefendWaveFallback()" style="border-color:var(--text3);color:var(--text3)">
+          <strong>↩ Fall Back and Consolidate</strong>
+          Cede ground to a tighter perimeter. Units protected from fatigue. Minor trust loss.
+        </button>
+        <button class="btn-situation" onclick="doDefendWaveCounter()" style="border-color:var(--red);color:var(--red)">
+          <strong>⚡ Counterattack</strong>
+          Push back aggressively. 55% wave broken — heavy fatigue, improved survival odds. 45% counter fails — unit survival check.
+        </button>
+        ${reinforceBtn}${fatigueHTML}`;
+      return;
+    }
 
     // Cleanse contact event: up to 4-option panel replaces standard 2-button layout while contact is active
     if(isCleanse && i._cleanseContactActive) {
@@ -8861,10 +8998,18 @@ function buildSituationPanel(i) {
         ${_defReinBtn}
         ${fatigueHTML}`;
     } else {
+      // Engineer relay support button — only when offer is active and Engineer is still available
+      const _cleanseEngBtn = (isCleanse && i._engineerSupportAvailable) ? (()=>{
+        const _eng = G.units.find(x=>x.id===CARRY.evolvedPWUnit && x.status==="Available");
+        return _eng ? `<button class="btn-situation" onclick="doCleanseEngineerSupport()" style="border-color:var(--pw);color:var(--pw)">
+          <strong>⚙ Deploy Engineer Relay</strong>
+          ${_eng.name} establishes a comms relay at the perimeter. Sweep window shortened ~25%. Engineer drains slowly while relay holds.
+        </button>` : "";
+      })() : "";
       // Preemptive reinforce button for cleanse (non-contact state)
       const _cleanseReinBtn = isCleanse ? (()=>{
         const _suppId = i.assignedUnits.find(uid => { const uu = G.units.find(x=>x.id===uid); return uu&&uu.isSuppressor; });
-        const _avail = G.units.find(x=>x.status==="Available"&&["Police","Fire","EMS","PublicWorks"].includes(x.type)&&x.id!==_suppId&&!i.assignedUnits.includes(x.id));
+        const _avail = G.units.find(x=>x.status==="Available"&&["Police","Fire","EMS","PublicWorks"].includes(x.type)&&x.id!==_suppId&&!i.assignedUnits.includes(x.id)&&x.id!==CARRY.evolvedPWUnit);
         return `<button class="btn-situation" onclick="doCleanseReinforce()" style="border-color:var(--cyan);color:var(--cyan)" ${!_avail?'disabled title="No unit available"':''}>
           <strong>⊕ Send Support</strong>
           ${_avail?(_avail.name+" moves in — shares base drain. Reduces fatigue pressure going forward."):"No available unit to send right now."}
@@ -8875,6 +9020,7 @@ function buildSituationPanel(i) {
           <strong>${pushLabel}</strong>
           ${pushDesc}
         </button>
+        ${_cleanseEngBtn}
         ${_cleanseReinBtn}
         <button class="btn-situation" onclick="doStagedCall('hold')" style="${(isDefendMode||isAugment)?'border-color:var(--amber);color:var(--amber)':''}">
           <strong>${holdLabel}</strong>
@@ -9170,6 +9316,37 @@ function doCleanseReinforce() {
   renderUnits(); renderQueue();
   document.querySelectorAll("#m-situation-opts .btn-situation").forEach(b=>b.disabled=true);
   document.getElementById("m-situation-result").textContent = reinUnit.name+" en route. Fatigue pressure will ease on arrival.";
+  setTimeout(closeModal, 1400);
+}
+
+function doCleanseEngineerSupport() {
+  const i = G.mInc; if(!i || !i.isCleanseMission) return;
+  const eng = G.units.find(x=>x.id===CARRY.evolvedPWUnit && x.status==="Available");
+  if(!eng) { document.getElementById("m-situation-result").textContent = "Engineer no longer available."; return; }
+  eng.status = "Traveling"; eng.assignedTo = i.id;
+  if(!i.assignedUnits.includes(eng.id)) i.assignedUnits.push(eng.id);
+  i._cleanseEngineerId = eng.id;
+  i._engineerSupportAvailable = false;
+  // Compress the remaining sweep window by 25%
+  i.timerMs = Math.round(i.timerMs * 0.75);
+  const _incId = i.id;
+  const travelMs = rng(15,25)*1000;
+  comm("dispatch","Dispatch: "+eng.id+" — deploy to "+i.district+". Establish relay at the perimeter. Support the sweep.");
+  setTimeout(()=>comm("unit", eng.id+": Copy. Setting up relay at "+i.district+". Will compress the window."), 500);
+  addUnitMarker(i.id, eng.id, eng.type, travelMs, ()=>{
+    const _eu = G.units.find(x=>x.id===CARRY.evolvedPWUnit);
+    const _inc = G.incidents.find(x=>x.id===_incId);
+    if(_eu && _eu.assignedTo===_incId) {
+      _eu.status = "OnScene";
+      comm("unit", _eu.id+": Dispatch — relay active at "+(_inc?_inc.district:"district")+". Sweep window compressed. Watching the line.");
+      renderUnits();
+    }
+  });
+  comm("system","Cleanse — "+i.district+": Engineer relay deployed. Operation window shortened ~25%.");
+  notif(eng.id+" relay active — "+i.district,"");
+  renderUnits(); renderQueue();
+  document.querySelectorAll("#m-situation-opts .btn-situation").forEach(b=>b.disabled=true);
+  document.getElementById("m-situation-result").textContent = eng.id+" en route. Cleanse window shortened ~25%.";
   setTimeout(closeModal, 1400);
 }
 
@@ -10408,6 +10585,7 @@ function endShift(){
     return;
   }
   // Commit trust to carry-forward
+  CARRY.prevNightTrust = CARRY.legit; // capture previous night's final trust before overwriting
   if(!CARRY.legitHistory) CARRY.legitHistory = [];
   CARRY.legitHistory.push(G.legit);
   CARRY.legit = G.legit;
@@ -10954,14 +11132,13 @@ function showDebrief(){
 
   // ── METRICS ROW ──────────────────────────────────────
   const trustDeltaHtml = (()=>{
-    const hist = CARRY.legitHistory || [];
-    if(!hist.length) return "";
-    const prev = hist[hist.length - 1];
-    const delta = G.legit - prev;
-    if(delta === 0) return `<div style="font-size:8px;color:var(--text3);margin-top:3px">─ no change</div>`;
-    const col = delta > 0 ? "var(--green)" : "var(--red)";
-    const arrow = delta > 0 ? "▲" : "▼";
-    return `<div style="font-size:8px;color:${col};margin-top:3px">${arrow} ${Math.abs(delta)} from last night</div>`;
+    const prev = CARRY.prevNightTrust;
+    if(prev == null) return "";
+    const deltaPct = Math.round((G.legit - prev) / 15 * 100);
+    if(deltaPct === 0) return `<div style="font-size:8px;color:var(--text3);margin-top:3px">─ no change from last night</div>`;
+    const col = deltaPct > 0 ? "var(--green)" : "var(--red)";
+    const arrow = deltaPct > 0 ? "▲" : "▼";
+    return `<div style="font-size:8px;color:${col};margin-top:3px">${arrow} ${Math.abs(deltaPct)}% from last night</div>`;
   })();
   const metrics = [
     {val:G.resolvedCt, lbl:"Resolved", cls: G.resolvedCt>=3?"good":G.resolvedCt>=1?"warn":"bad", sub:""},
@@ -11418,6 +11595,14 @@ function showSleepScreen(){
   _syncExtraRoster(); // ensure extraRoster reflects all non-base units before save
   saveGame(night + 1);
 
+  // Nights 11–13: skip sleep screen, go straight to op briefing for the active path
+  if(night >= 11 && night <= 13) {
+    document.getElementById("game-screen").classList.remove("active");
+    document.getElementById("debrief-modal").classList.remove("open");
+    showOpBriefing(night + 1);
+    return;
+  }
+
   // Night 10: research verdict routing (end-of-debrief decision point)
   if(night === 10) {
     const _sCount  = CARRY.collectionCount || 0;
@@ -11789,10 +11974,13 @@ function showTeaser(){
 // ── EVOLUTION HELPERS ─────────────────────────────────
 function getUnitEvolutionTier(u) {
   if(!u) return 1;
-  if(u.isSuppressor || u.isEvolved || u.id === (CARRY && CARRY.evolvedPoliceUnit) || u.id === (CARRY && CARRY.evolvedEMSUnit)) {
-    const xp = (CARRY && CARRY.unitXP && CARRY.unitXP[u.id] != null) ? CARRY.unitXP[u.id] : (u.xp || 0);
-    return xp >= 16 ? 3 : 2;
-  }
+  // Tier 3: unit has actually been promoted (flag-based, not XP-based)
+  if(u.isL3 || u.isExterminator || u.isGuardian || u.isBioAgent || u.isIronhand) return 3;
+  // Tier 2: unit has evolved to L2 but not yet L3
+  if(u.isSuppressor || u.isEvolved || u.isEngineer ||
+     u.id === (CARRY && CARRY.evolvedPoliceUnit) ||
+     u.id === (CARRY && CARRY.evolvedEMSUnit) ||
+     u.id === (CARRY && CARRY.evolvedPWUnit)) return 2;
   return 1;
 }
 // Stat modifiers by tier
@@ -12529,7 +12717,7 @@ function renderQueue(){
           </div>
           ${i.isCleanseMission && i._cleanseContactActive ? `<div style="margin:4px -8px -6px;padding:3px 8px;background:rgba(200,30,30,.14);border-top:1px solid rgba(200,30,30,.35);font-size:9px;color:var(--red);letter-spacing:1px;border-radius:0 0 1px 1px;">⚔ CONTACT — OPEN CARD</div>` : ""}
           ${i.isFortifyMission && i._fortifyContactActive ? `<div style="margin:4px -8px -6px;padding:3px 8px;background:rgba(200,30,30,.14);border-top:1px solid rgba(200,30,30,.35);font-size:9px;color:var(--red);letter-spacing:1px;border-radius:0 0 1px 1px;">⊞ ASSAULT — OPEN CARD</div>` : ""}
-          ${i.isEscortMission && i._escortContactActive ? `<div style="margin:4px -8px -6px;padding:3px 8px;background:rgba(200,30,30,.14);border-top:1px solid rgba(200,30,30,.35);font-size:9px;color:var(--red);letter-spacing:1px;border-radius:0 0 1px 1px;">⚔ CONTACT — OPEN CARD</div>` : ""}
+          ${i.isEscortMission && i._escortContactActive ? `<div style="margin:4px -8px -6px;padding:3px 8px;background:rgba(200,30,30,.14);border-top:1px solid rgba(200,30,30,.35);font-size:9px;color:var(--red);letter-spacing:1px;border-radius:0 0 1px 1px;">⚔ CONTACT — OPEN CARD</div>` : ""}${i.isDefendMission && i._defendWaveActive ? `<div style="margin:4px -8px -6px;padding:3px 8px;background:rgba(200,30,30,.14);border-top:1px solid rgba(200,30,30,.35);font-size:9px;color:var(--red);letter-spacing:1px;border-radius:0 0 1px 1px;">⚡ WAVE CONTACT — OPEN CARD</div>` : ""}
           ${hoverDetail}
           ${timerBar}
           ${showCardActions?`<div class="qi-pending-actions">${cardActions}</div>`:""}
@@ -13298,6 +13486,55 @@ function devFireDebrief(){
   if(typeof clearUnitMarkers === 'function') clearUnitMarkers();
   topBar(); renderUnits();
   setTimeout(showDebrief, 300);
+}
+
+function doDefendWaveHold() {
+  const i = G.incidents.find(x=>x.isDefendMission&&x._defendWaveActive);
+  if(!i) return;
+  i._defendWaveActive=false; G._activeDefendWave=null;
+  const _dU=i.assignedUnits[0]||'Unit';
+  comm('unit',_dU+': Dispatch — holding the line. Taking everything they\'ve got.');
+  i.assignedUnits.forEach(uid=>{const u=G.units.find(x=>x.id===uid);if(!u)return;
+    u.fatigue=Math.max(0,(u.fatigue||30)-5);u.readiness=u.fatigue<=8?'Red':u.fatigue<=14?'Yellow':'Green';});
+  renderUnits();renderQueue();
+  if(document.getElementById('m-situation-opts'))buildSituationPanel(i);
+}
+
+function doDefendWaveFallback() {
+  const i = G.incidents.find(x=>x.isDefendMission&&x._defendWaveActive);
+  if(!i) return;
+  i._defendWaveActive=false; G._activeDefendWave=null;
+  const _dU=i.assignedUnits[0]||'Unit';
+  comm('unit',_dU+': Dispatch — falling back to tighter perimeter. Ceding some ground.');
+  comm('alert','⚠ '+i.district.toUpperCase()+' — PARTIAL BREACH. Consolidated. Minor trust loss.');
+  G.legit=Math.max(0,G.legit-1);
+  notif('Perimeter consolidated — '+i.district,'amber');
+  renderUnits();renderQueue();
+  if(document.getElementById('m-situation-opts'))buildSituationPanel(i);
+}
+
+function doDefendWaveCounter() {
+  const i = G.incidents.find(x=>x.isDefendMission&&x._defendWaveActive);
+  if(!i) return;
+  i._defendWaveActive=false; G._activeDefendWave=null;
+  const _dU=i.assignedUnits[0]||'Unit';
+  comm('unit',_dU+': Dispatch — pushing back. Aggressive response.');
+  const _win=Math.random()<0.55;
+  if(_win){
+    i.assignedUnits.forEach(uid=>{const u=G.units.find(x=>x.id===uid);if(!u)return;
+      u.fatigue=Math.max(0,(u.fatigue||30)-8);u.readiness=u.fatigue<=8?'Red':u.fatigue<=14?'Yellow':'Green';});
+    comm('unit',_dU+': Dispatch — wave broken. They\'re pulling back. Hold position.');
+    i._reinforced=true;
+    notif('Wave repelled — '+i.district,'amber');
+  } else {
+    i.assignedUnits.forEach(uid=>{const u=G.units.find(x=>x.id===uid);if(!u)return;
+      u.fatigue=Math.max(0,(u.fatigue||30)-12);u.readiness=u.fatigue<=8?'Red':u.fatigue<=14?'Yellow':'Green';});
+    const _ru=G.units.find(x=>i.assignedUnits.includes(x.id));
+    if(_ru) setTimeout(()=>{comm('unit',_dU+': Dispatch — counter failed. We\'re in trouble.');_unitRNGOutcome(_ru);},1500);
+    notif('Counter failed — '+i.district+' — check card','red');
+  }
+  renderUnits();renderQueue();
+  if(document.getElementById('m-situation-opts'))buildSituationPanel(i);
 }
 
 function defendMissionUnitRolls(i){
