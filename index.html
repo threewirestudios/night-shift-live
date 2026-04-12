@@ -7762,9 +7762,9 @@ function _resolveInoculateSuccess() {
   comm("success","✔ INOCULATE COMPLETE — AMR-7 deployed. UHF transmission active city-wide.");
   setTimeout(()=>{
     comm("narrative","◈ The retrovirus is spreading through the city. Districts beginning to clear.");
-    const _controlled = Object.keys(DC).filter(d => !CARRY.lostDistricts || !CARRY.lostDistricts.has(d));
-    _controlled.forEach((d,idx)=>{ setTimeout(()=>markDistrictCured(d), 1400*(idx+1)); });
-    setTimeout(()=>showVictory(), 1400*(_controlled.length+1)+2000);
+    const _allDistricts = Object.keys(DC);
+    _allDistricts.forEach((d,idx)=>{ setTimeout(()=>markDistrictCured(d), 1400*(idx+1)); });
+    setTimeout(()=>showVictory(), 1400*(_allDistricts.length+1)+2000);
   }, 2200);
 }
 
